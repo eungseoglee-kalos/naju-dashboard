@@ -195,8 +195,9 @@ export default function ConnectorQualityPage() {
     return { processPpm, inspectionPpm, achievementPct };
   }, [filtered]);
 
-  // 연도/월 필터를 무시하고 전체 기간을 본다 -- 월별 추이 차트는 그래야 의미가
-  // 있다(다른 대시보드의 "연도별 비교" 차트들과 같은 이유).
+  // 연도/월 필터를 무시하고 최근 24개월을 본다 -- 전체 기간을 다 그리면
+  // 개월이 너무 많아져 막대가 뭉개진다(다른 대시보드의 "연도별 비교" 차트가
+  // 필터를 무시하는 것과 같은 이유로, 범위만 24개월로 못 박는다).
   const monthlyTrend = useMemo(() => {
     if (!records) return [];
     const byMonth = new Map<string, ConnectorRecord[]>();
@@ -207,6 +208,7 @@ export default function ConnectorQualityPage() {
     }
     return Array.from(byMonth.entries())
       .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-24)
       .map(([key, recs]) => {
         const row: Record<string, number | string | null> = {
           month: key.slice(2),
