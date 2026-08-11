@@ -17,6 +17,9 @@ https://supabase.com/dashboard/project/ctmetyjsfoebkbzkeqif/sql/new
 | `shipment_records.sql` | `heater_coil_shipments`, `mesh_shipments` | `/heater-coil`, `/mesh` |
 | `vm_records.sql` | `vm_shipments`, `vm_backlog` | `/vm-coil` |
 | `connector_quality.sql` | `connector_quality_records`, `connector_defect_details` | `/connector-quality` |
+| `electron_beam_quality.sql` | `electron_beam_quality_records`, `electron_beam_defect_details` | `/electron-beam-quality` |
+| `mesh_quality.sql` | `mesh_quality_records`, `mesh_quality_defect_details` | `/mesh-quality` |
+| `vm_quality.sql` | `vm_quality_records`, `vm_quality_defect_details` | `/vm-quality` |
 | `sync_log.sql` | `sync_log` | 전 대시보드의 "마지막 갱신" 배지, 취합 이력 |
 | `admin_and_dashboard_order.sql` | `profiles.is_admin`, `dashboard_order` | `/admin` (관리자 지정, 대시보드 순서) |
 | `dashboard_access.sql` | `profiles.allowed_dashboards` | `/admin` (사용자별 대시보드 열람 권한) |
@@ -25,6 +28,17 @@ https://supabase.com/dashboard/project/ctmetyjsfoebkbzkeqif/sql/new
 `profiles` 자체(가입 시 행 생성)는 인증에 딸린 것이라 여기서 만들지 않지만,
 그 위에 얹는 컬럼(`is_admin`, `allowed_dashboards`)과 정책은 위 파일들이
 관리합니다.
+
+## "품질실적" 계열 파일은 시트 이름이 전부 같습니다
+
+`connector_quality.sql`/`electron_beam_quality.sql`/`mesh_quality.sql`/
+`vm_quality.sql` 네 대시보드는 모두 Power BI에서 내려받은 파일이라 시트
+이름이 하나같이 `ERPDATA`/`불량ERP`입니다. 시트 이름만으로는 어느 대시보드
+파일인지 구분이 안 되므로, `lib/ingest.ts`의 `IngestTarget.fileNameIncludes`
+로 **파일명**을 함께 확인합니다("커넥터", "전자빔", "메시 품질실적", "VM
+품질실적"). 이 계열에 다섯 번째 품질 대시보드를 추가한다면 `fileNameIncludes`
+를 꼭 채워야 합니다 — 안 그러면 그 파일을 올릴 때 다른 품질 대시보드
+테이블에도 잘못 반영됩니다.
 
 ## 전부 멱등입니다
 

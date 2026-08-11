@@ -23,6 +23,24 @@ import {
   CONNECTOR_ERP_SHEET,
   CONNECTOR_DEFECT_SHEET,
 } from "./connector-import";
+import {
+  parseElectronBeamRecords,
+  parseElectronBeamDefects,
+  ELECTRON_BEAM_ERP_SHEET,
+  ELECTRON_BEAM_DEFECT_SHEET,
+} from "./electron-beam-import";
+import {
+  parseMeshQualityRecords,
+  parseMeshQualityDefects,
+  MESH_QUALITY_ERP_SHEET,
+  MESH_QUALITY_DEFECT_SHEET,
+} from "./mesh-quality-import";
+import {
+  parseVmQualityRecords,
+  parseVmQualityDefects,
+  VM_QUALITY_ERP_SHEET,
+  VM_QUALITY_DEFECT_SHEET,
+} from "./vm-quality-import";
 
 /**
  * 자동 취합이 기존 데이터를 날리지 않게 하는 하한선. 엑셀이 열려 있어 잠겼거나
@@ -34,6 +52,14 @@ export const MIN_ROW_RATIO = 0.5;
 export type IngestTarget = {
   /** 이 시트가 있으면 이 대상으로 판별한다. */
   sheet: string;
+  /**
+   * 여러 품질실적 대시보드가 전부 Power BI에서 나온 같은 시트 이름
+   * ("ERPDATA", "불량ERP")을 쓰기 때문에 시트만으로는 어느 파일인지 구분이
+   * 안 된다. 이 값이 있으면 파일명에 이 문자열이 들어 있어야만 이 대상으로
+   * 판별한다 (예: "커넥터", "전자빔"). 시트 이름이 이미 고유한 대상은 안
+   * 써도 된다.
+   */
+  fileNameIncludes?: string;
   table: string;
   label: string;
   /** 취합 후 캐시를 무효화할 경로. */
@@ -94,6 +120,7 @@ export const INGEST_TARGETS: IngestTarget[] = [
   },
   {
     sheet: CONNECTOR_ERP_SHEET,
+    fileNameIncludes: "커넥터",
     table: "connector_quality_records",
     label: "커넥터 품질실적",
     path: "/connector-quality",
@@ -101,21 +128,79 @@ export const INGEST_TARGETS: IngestTarget[] = [
   },
   {
     sheet: CONNECTOR_DEFECT_SHEET,
+    fileNameIncludes: "커넥터",
     table: "connector_defect_details",
     label: "커넥터 불량유형",
     path: "/connector-quality",
     parse: parseConnectorDefects,
   },
+  {
+    sheet: ELECTRON_BEAM_ERP_SHEET,
+    fileNameIncludes: "전자빔",
+    table: "electron_beam_quality_records",
+    label: "전자빔 품질실적",
+    path: "/electron-beam-quality",
+    parse: parseElectronBeamRecords,
+  },
+  {
+    sheet: ELECTRON_BEAM_DEFECT_SHEET,
+    fileNameIncludes: "전자빔",
+    table: "electron_beam_defect_details",
+    label: "전자빔 불량유형",
+    path: "/electron-beam-quality",
+    parse: parseElectronBeamDefects,
+  },
+  {
+    sheet: MESH_QUALITY_ERP_SHEET,
+    fileNameIncludes: "메시 품질실적",
+    table: "mesh_quality_records",
+    label: "메시 품질실적",
+    path: "/mesh-quality",
+    parse: parseMeshQualityRecords,
+  },
+  {
+    sheet: MESH_QUALITY_DEFECT_SHEET,
+    fileNameIncludes: "메시 품질실적",
+    table: "mesh_quality_defect_details",
+    label: "메시 불량유형",
+    path: "/mesh-quality",
+    parse: parseMeshQualityDefects,
+  },
+  {
+    sheet: VM_QUALITY_ERP_SHEET,
+    fileNameIncludes: "VM 품질실적",
+    table: "vm_quality_records",
+    label: "VM코일 품질실적",
+    path: "/vm-quality",
+    parse: parseVmQualityRecords,
+  },
+  {
+    sheet: VM_QUALITY_DEFECT_SHEET,
+    fileNameIncludes: "VM 품질실적",
+    table: "vm_quality_defect_details",
+    label: "VM코일 불량유형",
+    path: "/vm-quality",
+    parse: parseVmQualityDefects,
+  },
 ];
 
-/** 워크북에 들어 있는 시트를 보고 어떤 대상을 취합할지 고른다. */
-export function detectTargets(buffer: ArrayBuffer): IngestTarget[] {
+/** 워크북에 들어 있는 시트(와 필요하면 파일명)를 보고 어떤 대상을 취합할지 고른다. */
+export function detectTargets(
+  buffer: ArrayBuffer,
+  fileName?: string | null,
+): IngestTarget[] {
   const { SheetNames } = XLSX.read(buffer, {
     type: "array",
     bookSheets: true,
   });
   const present = new Set(SheetNames);
-  return INGEST_TARGETS.filter((t) => present.has(t.sheet));
+  return INGEST_TARGETS.filter((t) => {
+    if (!present.has(t.sheet)) return false;
+    if (t.fileNameIncludes && !(fileName ?? "").includes(t.fileNameIncludes)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export class IngestError extends Error {}
@@ -214,7 +299,7 @@ export async function ingestWorkbook(
   buffer: ArrayBuffer,
   opts: { source: string; fileName: string | null },
 ): Promise<IngestOutcome[]> {
-  const targets = detectTargets(buffer);
+  const targets = detectTargets(buffer, opts.fileName);
 
   if (targets.length === 0) {
     throw new IngestError(

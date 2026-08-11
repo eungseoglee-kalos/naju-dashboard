@@ -41,6 +41,21 @@ export const DASHBOARDS: DashboardEntry[] = [
     title: "커넥터 품질실적",
     description: "커넥터 공정별 불량률, 품질목표 달성률 및 불량유형 분석",
   },
+  {
+    href: "/electron-beam-quality",
+    title: "전자빔 품질실적",
+    description: "전자빔 공정별 불량률, 품질목표 달성률 및 불량유형 분석",
+  },
+  {
+    href: "/mesh-quality",
+    title: "메시 품질실적",
+    description: "메시 공정별 불량률, 품질목표 달성률 및 불량유형 분석",
+  },
+  {
+    href: "/vm-quality",
+    title: "VM코일 품질실적",
+    description: "VM코일 공정별 불량률, 품질목표 달성률 및 불량유형 분석",
+  },
 ];
 
 // 목록 위치에 따라 색이 돌아가므로, 순서를 바꾸면 카드 색도 함께 바뀝니다.
