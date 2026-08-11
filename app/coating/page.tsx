@@ -106,6 +106,7 @@ export default function CoatingPage() {
   const [yearOverride, setYearOverride] = useState<string | null>(null);
   const [monthOverride, setMonthOverride] = useState<string | null>(null);
   const [selectedParts, setSelectedParts] = useState<Set<string>>(new Set());
+  const [partsOpen, setPartsOpen] = useState(false);
   const isDark = useIsDark();
   const axisColor = isDark ? "#d4d4d4" : "#404040";
   const labelColor = isDark ? "#f5f5f5" : "#171717";
@@ -320,25 +321,58 @@ export default function CoatingPage() {
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-foreground/60">품번</span>
-          <div className="flex flex-wrap gap-3">
-            {partNumbers.map((p) => (
-              <label key={p} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selectedParts.has(p)}
-                  onChange={(e) => {
-                    const next = new Set(selectedParts);
-                    if (e.target.checked) next.add(p);
-                    else next.delete(p);
-                    setSelectedParts(next);
-                  }}
-                />
-                {p}
-              </label>
-            ))}
-          </div>
+        <div className="relative ml-16">
+          <span className="mb-1 block text-xs text-foreground/60">품번</span>
+          <button
+            type="button"
+            onClick={() => setPartsOpen((v) => !v)}
+            className="rounded-md border border-black/10 bg-white px-2 py-1.5 text-left text-sm text-black dark:border-white/10 dark:bg-neutral-800 dark:text-white"
+          >
+            {selectedParts.size === 0
+              ? "전체"
+              : `${selectedParts.size}개 선택`}
+            <span className="ml-2 text-foreground/40">▾</span>
+          </button>
+
+          {partsOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setPartsOpen(false)}
+                aria-hidden
+              />
+              <div className="absolute left-0 top-full z-50 mt-1 max-h-64 w-56 overflow-y-auto rounded-md border border-black/10 bg-white p-2 shadow-lg dark:border-white/10 dark:bg-neutral-800">
+                <label className="flex items-center gap-2 border-b border-black/10 pb-2 text-sm dark:border-white/10">
+                  <input
+                    type="checkbox"
+                    checked={selectedParts.size === 0}
+                    onChange={() => setSelectedParts(new Set())}
+                  />
+                  전체
+                </label>
+                <div className="flex flex-col gap-1 pt-2">
+                  {partNumbers.map((p) => (
+                    <label
+                      key={p}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedParts.has(p)}
+                        onChange={(e) => {
+                          const next = new Set(selectedParts);
+                          if (e.target.checked) next.add(p);
+                          else next.delete(p);
+                          setSelectedParts(next);
+                        }}
+                      />
+                      {p}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
