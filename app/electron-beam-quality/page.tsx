@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
-  BarChart,
+  PieChart,
+  Pie,
+  Cell,
   Bar,
   Line,
   XAxis,
@@ -21,9 +23,10 @@ import { periodDefaults } from "@/lib/period";
 import { labelNumber } from "@/lib/format";
 import LastSyncBadge from "@/components/dashboard/LastSyncBadge";
 
-type ConnectorRecord = {
+type BeamRecord = {
   work_date: string;
   process: string;
+  part_number: string;
   part_code: string | null;
   qty_total: number;
   qty_defect: number;
@@ -31,41 +34,38 @@ type ConnectorRecord = {
 
 type DefectDetail = {
   work_date: string;
-  part_code: string | null;
+  part_number: string;
+  spec: string | null;
   defect_type: string;
   qty_defect: number;
 };
 
-// 품질목표는 원본 엑셀의 "커넥터품질목표" 시트에서도 매달 50,000 으로 고정돼
-// 있다 (실적에 따라 바뀌는 값이 아니라 회사가 정한 기준선). 매번 그 시트의
-// 복잡한 피벗 구조를 다시 읽는 대신 그 값을 그대로 상수로 둔다.
-const QUALITY_TARGET_PPM = 50000;
+// 품질목표는 참고 화면에서 87,000 PPM 으로 고정돼 있다 (커넥터와 마찬가지로
+// 실적에 따라 바뀌는 값이 아니라 회사가 정한 기준선).
+const QUALITY_TARGET_PPM = 87000;
 
-const INSPECTION_PROCESSES = new Set(["커넥터 검사1", "커넥터 검사2"]);
+const INSPECTION_PROCESSES = new Set(["전자빔검사"]);
 const NON_INSPECTION_PROCESSES = new Set([
-  "커넥터 세척",
-  "커넥터절단",
-  "커넥터홀가공",
+  "전자빔세척",
+  "전자빔절곡",
+  "전자빔코일링",
+  "전자빔프레스",
 ]);
 
 const PROCESS_COLORS: Record<string, string> = {
-  "커넥터 검사1": "#16a34a",
-  "커넥터 검사2": "#2563eb",
-  "커넥터 세척": "#eab308",
-  커넥터절단: "#f97316",
-  커넥터홀가공: "#6b7280",
+  전자빔검사: "#2563eb",
+  전자빔세척: "#f97316",
+  전자빔절곡: "#6b7280",
+  전자빔코일링: "#eab308",
+  전자빔프레스: "#16a34a",
 };
 const PROCESS_ORDER = Object.keys(PROCESS_COLORS);
 
 const DEFECT_TYPES = [
   "공정불량",
+  "다리불량",
+  "단선불량",
   "성형불량",
-  "커넥터 길이불량",
-  "커넥터 외경불량",
-  "커넥터 외관불량",
-  "커넥터 홀깊이불량",
-  "커넥터 홀위치 불량",
-  "커넥터 홀크기불량",
   "크랙불량",
   "포장불량",
 ];
@@ -81,8 +81,6 @@ const PART_COLORS = [
   "#dc2626",
   "#6b7280",
   "#0891b2",
-  "#84cc16",
-  "#a855f7",
 ];
 
 function ppm(defect: number, total: number): number | null {
@@ -113,8 +111,8 @@ async function fetchAll<T>(table: string, columns: string): Promise<T[]> {
   return all;
 }
 
-export default function ConnectorQualityPage() {
-  const [records, setRecords] = useState<ConnectorRecord[] | null>(null);
+export default function ElectronBeamQualityPage() {
+  const [records, setRecords] = useState<BeamRecord[] | null>(null);
   const [defects, setDefects] = useState<DefectDetail[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [yearOverride, setYearOverride] = useState<string | null>(null);
@@ -125,13 +123,13 @@ export default function ConnectorQualityPage() {
 
   useEffect(() => {
     Promise.all([
-      fetchAll<ConnectorRecord>(
-        "connector_quality_records",
-        "work_date, process, part_code, qty_total, qty_defect",
+      fetchAll<BeamRecord>(
+        "electron_beam_quality_records",
+        "work_date, process, part_number, part_code, qty_total, qty_defect",
       ),
       fetchAll<DefectDetail>(
-        "connector_defect_details",
-        "work_date, part_code, defect_type, qty_defect",
+        "electron_beam_defect_details",
+        "work_date, part_number, spec, defect_type, qty_defect",
       ),
     ])
       .then(([r, d]) => {
@@ -192,8 +190,6 @@ export default function ConnectorQualityPage() {
 
     const processPpm = groupPpm(NON_INSPECTION_PROCESSES);
     const inspectionPpm = groupPpm(INSPECTION_PROCESSES);
-    // 달성률은 검사불량률만이 아니라 공정+검사를 합친 값 기준이다
-    // (품질목표 ÷ (공정불량률+검사불량률) x 100).
     const combinedPpm = (processPpm ?? 0) + (inspectionPpm ?? 0);
     const achievementPct =
       combinedPpm === 0 ? null : Math.round((QUALITY_TARGET_PPM / combinedPpm) * 100);
@@ -201,12 +197,10 @@ export default function ConnectorQualityPage() {
     return { processPpm, inspectionPpm, achievementPct };
   }, [filtered]);
 
-  // 연도/월 필터를 무시하고 최근 24개월을 본다 -- 전체 기간을 다 그리면
-  // 개월이 너무 많아져 막대가 뭉개진다(다른 대시보드의 "연도별 비교" 차트가
-  // 필터를 무시하는 것과 같은 이유로, 범위만 24개월로 못 박는다).
+  // 연도/월 필터를 무시하고 최근 24개월을 본다 -- 커넥터 대시보드와 같은 이유.
   const monthlyTrend = useMemo(() => {
     if (!records) return [];
-    const byMonth = new Map<string, ConnectorRecord[]>();
+    const byMonth = new Map<string, BeamRecord[]>();
     for (const r of records) {
       const key = r.work_date.slice(0, 7);
       if (!byMonth.has(key)) byMonth.set(key, []);
@@ -230,10 +224,9 @@ export default function ConnectorQualityPage() {
       });
   }, [records]);
 
-  // 일간 차트는 연도/월 필터를 그대로 따른다 -- "전체"를 고르면 일 단위로는
-  // 너무 촘촘해지니, 특정 달을 골랐을 때 보라는 취지의 차트다.
+  // 일간 차트는 연도/월 필터를 그대로 따른다.
   const dailyTrend = useMemo(() => {
-    const byDate = new Map<string, ConnectorRecord[]>();
+    const byDate = new Map<string, BeamRecord[]>();
     for (const r of filtered) {
       if (!byDate.has(r.work_date)) byDate.set(r.work_date, []);
       byDate.get(r.work_date)!.push(r);
@@ -273,37 +266,38 @@ export default function ConnectorQualityPage() {
       .filter((d) => d.ppm !== null && d.ppm > 0);
   }, [partCodes, filtered]);
 
+  // 참고 화면은 이 차트를 "형상별 생산 비율" 파이로 그렸고, 짧은 코드가
+  // 아니라 품목 코드 전체(GWELE0031 등)로 구분한다.
   const partShare = useMemo(() => {
+    const partNumbers = Array.from(new Set(filtered.map((r) => r.part_number)));
     const totalQty = filtered.reduce((a, r) => a + r.qty_total, 0);
-    if (totalQty === 0) return { row: {}, parts: [] as string[] };
-    const parts = partCodes
-      .map((code) => ({
-        code,
-        qty: filtered
-          .filter((r) => r.part_code === code)
-          .reduce((a, r) => a + r.qty_total, 0),
-      }))
-      .filter((d) => d.qty > 0)
-      .sort((a, b) => b.qty - a.qty);
-
-    const row: Record<string, number | string> = { name: "생산 비율" };
-    for (const p of parts) {
-      row[p.code] = Math.round((p.qty / totalQty) * 1000) / 10;
-    }
-    return { row, parts: parts.map((p) => p.code) };
-  }, [partCodes, filtered]);
+    if (totalQty === 0) return [];
+    return partNumbers
+      .map((p) => {
+        const qty = filtered
+          .filter((r) => r.part_number === p)
+          .reduce((a, r) => a + r.qty_total, 0);
+        return { name: p, value: qty, pct: Math.round((qty / totalQty) * 1000) / 10 };
+      })
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [filtered]);
 
   const defectTable = useMemo(() => {
-    const byPart = new Map<string, Map<string, number>>();
+    const byPart = new Map<string, { spec: string | null; perType: Map<string, number> }>();
     for (const r of filteredDefects) {
-      const code = r.part_code ?? r.defect_type;
-      if (!byPart.has(code)) byPart.set(code, new Map());
-      const perType = byPart.get(code)!;
-      perType.set(r.defect_type, (perType.get(r.defect_type) ?? 0) + r.qty_defect);
+      if (!byPart.has(r.part_number)) {
+        byPart.set(r.part_number, { spec: r.spec, perType: new Map() });
+      }
+      const entry = byPart.get(r.part_number)!;
+      entry.perType.set(
+        r.defect_type,
+        (entry.perType.get(r.defect_type) ?? 0) + r.qty_defect,
+      );
     }
     return Array.from(byPart.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([part, perType]) => ({ part, perType }));
+      .map(([part, { spec, perType }]) => ({ part, spec, perType }));
   }, [filteredDefects]);
 
   if (error) {
@@ -317,8 +311,8 @@ export default function ConnectorQualityPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-lg font-semibold">커넥터 품질실적</h1>
-        <LastSyncBadge table="connector_quality_records" />
+        <h1 className="text-lg font-semibold">전자빔 품질실적</h1>
+        <LastSyncBadge table="electron_beam_quality_records" />
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
@@ -376,9 +370,9 @@ export default function ConnectorQualityPage() {
       </div>
 
       <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-        <p className="mb-1 text-sm font-semibold">커넥터 월간 불량률</p>
+        <p className="mb-1 text-sm font-semibold">전자빔 월간 불량률</p>
         <p className="mb-3 text-xs text-foreground/50">
-          전체 기간 · 공정별 PPM, 단위: PPM
+          최근 24개월 · 공정별 PPM, 단위: PPM
         </p>
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
@@ -403,7 +397,7 @@ export default function ConnectorQualityPage() {
       </div>
 
       <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-        <p className="mb-1 text-sm font-semibold">커넥터 일간 불량률</p>
+        <p className="mb-1 text-sm font-semibold">전자빔 일간 불량률</p>
         <p className="mb-3 text-xs text-foreground/50">
           선택한 기간 · 공정별 PPM, 단위: PPM
         </p>
@@ -431,7 +425,7 @@ export default function ConnectorQualityPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-          <p className="mb-4 text-sm font-semibold">품번별 불량률 (PPM)</p>
+          <p className="mb-4 text-sm font-semibold">품목별 불량률 (PPM)</p>
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={partDefectRate} margin={{ top: 20, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -454,38 +448,63 @@ export default function ConnectorQualityPage() {
         </div>
 
         <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-          <p className="mb-4 text-sm font-semibold">품번별 생산 비율</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={[partShare.row]} layout="vertical" margin={{ top: 20 }}>
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: axisColor, fontSize: 11 }} />
-              <YAxis type="category" dataKey="name" hide />
-              <Tooltip {...TOOLTIP_PROPS} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
-              {partShare.parts.map((code, i) => (
-                <Bar key={code} dataKey={code} name={code} stackId="share" fill={PART_COLORS[i % PART_COLORS.length]}>
-                  <LabelList
-                    dataKey={code}
-                    position="center"
-                    fill="#ffffff"
-                    fontSize={10}
-                    formatter={(v: unknown) => (Number(v) >= 3 ? `${v}%` : "")}
-                  />
-                </Bar>
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="mb-4 text-sm font-semibold">품목별 생산 비율</p>
+          {partShare.length === 0 ? (
+            <p className="py-24 text-center text-sm text-foreground/60">
+              데이터가 없습니다.
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={partShare}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={58}
+                  outerRadius={92}
+                  label={(props) => {
+                    const { x, y, cx, name, payload } = props as {
+                      x: number;
+                      y: number;
+                      cx: number;
+                      name: string;
+                      payload: { pct: number };
+                    };
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill={labelColor}
+                        fontSize={11}
+                        textAnchor={x > cx ? "start" : "end"}
+                        dominantBaseline="central"
+                      >
+                        {`${name} ${payload.pct}%`}
+                      </text>
+                    );
+                  }}
+                >
+                  {partShare.map((d, i) => (
+                    <Cell key={d.name} fill={PART_COLORS[i % PART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
       <div className="rounded-lg border border-black/10 dark:border-white/10">
         <div className="border-b border-black/10 px-4 py-3 dark:border-white/10">
-          <p className="text-sm font-semibold">커넥터 검사공정 세부 불량유형</p>
+          <p className="text-sm font-semibold">전자빔 검사공정 세부 불량유형</p>
         </div>
         <div className="max-h-96 overflow-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-background">
               <tr className="border-b border-black/10 text-left dark:border-white/10">
-                <th className="px-3 py-2 font-medium">품번</th>
+                <th className="px-3 py-2 font-medium">품목</th>
+                <th className="px-3 py-2 font-medium">규격</th>
                 {DEFECT_TYPES.map((t) => (
                   <th key={t} className="px-3 py-2 text-center font-medium">
                     {t}
@@ -497,16 +516,17 @@ export default function ConnectorQualityPage() {
               {defectTable.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={DEFECT_TYPES.length + 1}
+                    colSpan={DEFECT_TYPES.length + 2}
                     className="px-3 py-8 text-center text-foreground/50"
                   >
                     선택한 기간에 불량 기록이 없습니다.
                   </td>
                 </tr>
               ) : (
-                defectTable.map(({ part, perType }) => (
+                defectTable.map(({ part, spec, perType }) => (
                   <tr key={part} className="border-b border-black/5 dark:border-white/5">
                     <td className="px-3 py-1.5 font-medium">{part}</td>
+                    <td className="px-3 py-1.5 text-foreground/60">{spec ?? ""}</td>
                     {DEFECT_TYPES.map((t) => (
                       <td key={t} className="px-3 py-1.5 text-center">
                         {perType.get(t)?.toLocaleString() ?? ""}
