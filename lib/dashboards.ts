@@ -36,6 +36,11 @@ export const DASHBOARDS: DashboardEntry[] = [
     title: "진공증착 생산실적",
     description: "증착코일·증착재 출하 중량, 외주비율 및 전년 대비 증감",
   },
+  {
+    href: "/connector-quality",
+    title: "커넥터 품질실적",
+    description: "커넥터 공정별 불량률, 품질목표 달성률 및 불량유형 분석",
+  },
 ];
 
 // 목록 위치에 따라 색이 돌아가므로, 순서를 바꾸면 카드 색도 함께 바뀝니다.

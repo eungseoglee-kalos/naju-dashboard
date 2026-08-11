@@ -17,6 +17,12 @@ import {
   VM_SHIPMENT_SHEET,
   VM_BACKLOG_SHEET,
 } from "./vm-import";
+import {
+  parseConnectorRecords,
+  parseConnectorDefects,
+  CONNECTOR_ERP_SHEET,
+  CONNECTOR_DEFECT_SHEET,
+} from "./connector-import";
 
 /**
  * 자동 취합이 기존 데이터를 날리지 않게 하는 하한선. 엑셀이 열려 있어 잠겼거나
@@ -85,6 +91,20 @@ export const INGEST_TARGETS: IngestTarget[] = [
     // 당월 수주 잔량은 그 달에 남은 주문만 담은 스냅샷이라 50여 행에서
     // 한 자리로 줄어드는 게 정상이다. 급감 가드를 걸면 멀쩡한 갱신이 막힌다.
     minRowRatio: 0,
+  },
+  {
+    sheet: CONNECTOR_ERP_SHEET,
+    table: "connector_quality_records",
+    label: "커넥터 품질실적",
+    path: "/connector-quality",
+    parse: parseConnectorRecords,
+  },
+  {
+    sheet: CONNECTOR_DEFECT_SHEET,
+    table: "connector_defect_details",
+    label: "커넥터 불량유형",
+    path: "/connector-quality",
+    parse: parseConnectorDefects,
   },
 ];
 
