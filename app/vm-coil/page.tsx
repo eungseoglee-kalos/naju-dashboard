@@ -453,9 +453,6 @@ export default function VmCoilPage() {
 
         <ChartCard title="당월 예상 출하량 (kg)" note={`${lastShipDate?.slice(0, 7) ?? "-"} 기준 · 출하량 + 수주잔량`}>
           <ResponsiveContainer width="100%" height={320}>
-            {/* 예상출하량은 출하량 + 수주잔량의 합이라, 나란한 막대로 두면
-                옆의 두 막대와 같은 층위로 읽힌다. 위 연간 차트의 합계선과
-                같은 방식으로 꺾은선에 올려 합계임을 드러낸다. */}
             <ComposedChart data={forecast} margin={{ top: 24, right: 8 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="name" tick={{ fill: axisColor, fontSize: 11 }} />
@@ -468,15 +465,9 @@ export default function VmCoilPage() {
               <Bar dataKey="수주잔량" fill={COLOR_BACKLOG}>
                 <LabelList dataKey="수주잔량" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
               </Bar>
-              <Line
-                dataKey="예상출하량"
-                stroke={COLOR_FORECAST}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls
-              >
+              <Bar dataKey="예상출하량" fill={COLOR_FORECAST}>
                 <LabelList dataKey="예상출하량" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
-              </Line>
+              </Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
