@@ -89,6 +89,16 @@ function ppm(defect: number, total: number): number | null {
   return total === 0 ? null : Math.round((defect / total) * 1_000_000);
 }
 
+// 월간/일간 차트의 막대 맨 위에 합계를 보여주기 위한 값. 쌓인 막대의 실제
+// 높이는 공정별 PPM들의 합이므로(각자 PPM을 구해 쌓는 방식), 그 합을 그대로
+// 더해서 구한다.
+function stackedTotal(row: Record<string, number | string | null>): number {
+  return PROCESS_ORDER.reduce((sum, proc) => {
+    const v = row[proc];
+    return sum + (typeof v === "number" ? v : 0);
+  }, 0);
+}
+
 async function fetchAll<T>(table: string, columns: string): Promise<T[]> {
   const supabase = createClient();
   const pageSize = 1000;
@@ -226,6 +236,7 @@ export default function ConnectorQualityPage() {
           row[proc] = ppm(defect, total);
         }
         row.품질목표 = QUALITY_TARGET_PPM;
+        row.합계 = stackedTotal(row);
         return row;
       });
   }, [records]);
@@ -251,6 +262,7 @@ export default function ConnectorQualityPage() {
           row[proc] = ppm(defect, total);
         }
         row.품질목표 = QUALITY_TARGET_PPM;
+        row.합계 = stackedTotal(row);
         return row;
       });
   }, [filtered]);
@@ -390,6 +402,20 @@ export default function ConnectorQualityPage() {
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
+            {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
+                0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
+                찍는 선(보이지는 않게)에 라벨만 얹는다 -- 그 y 좌표가 곧 쌓인
+                막대의 맨 위다. */}
+            <Line dataKey="합계" name="합계" stroke="none" dot={false} legendType="none" isAnimationActive={false}>
+              <LabelList
+                dataKey="합계"
+                position="top"
+                fill={labelColor}
+                fontSize={11}
+                fontWeight={700}
+                formatter={labelNumber}
+              />
+            </Line>
             <Line
               dataKey="품질목표"
               name="품질목표"
@@ -417,6 +443,20 @@ export default function ConnectorQualityPage() {
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
+            {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
+                0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
+                찍는 선(보이지는 않게)에 라벨만 얹는다 -- 그 y 좌표가 곧 쌓인
+                막대의 맨 위다. */}
+            <Line dataKey="합계" name="합계" stroke="none" dot={false} legendType="none" isAnimationActive={false}>
+              <LabelList
+                dataKey="합계"
+                position="top"
+                fill={labelColor}
+                fontSize={11}
+                fontWeight={700}
+                formatter={labelNumber}
+              />
+            </Line>
             <Line
               dataKey="품질목표"
               name="품질목표"
