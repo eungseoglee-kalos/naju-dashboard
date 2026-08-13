@@ -497,14 +497,7 @@ export default function ShipmentDashboard({
                   formatter={labelNumber}
                 />
               </Bar>
-              <Line
-                dataKey="total"
-                name="합계"
-                stroke={COLOR_TOTAL}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls
-              >
+              <Bar dataKey="total" name="합계" fill={COLOR_TOTAL}>
                 <LabelList
                   dataKey="total"
                   position="top"
@@ -512,7 +505,7 @@ export default function ShipmentDashboard({
                   fontSize={11}
                   formatter={labelNumber}
                 />
-              </Line>
+              </Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
