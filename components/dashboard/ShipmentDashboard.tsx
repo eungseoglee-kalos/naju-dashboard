@@ -515,7 +515,7 @@ export default function ShipmentDashboard({
         <div className="xl:col-span-2">
           <ChartCard title={vendorChartTitle} note={`${year}년 · 월 필터 무시`}>
             <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={vendorTrend.data} margin={{ top: 20, right: 12 }}>
+              <ComposedChart data={vendorTrend.data} margin={{ top: 20, right: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
                 <YAxis
@@ -541,7 +541,21 @@ export default function ShipmentDashboard({
                     />
                   </Bar>
                 ))}
-              </BarChart>
+                {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
+                    0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
+                    찍는 선(보이지는 않게)에 라벨만 얹는다 -- 그 y 좌표가 곧 쌓인
+                    막대의 맨 위다. */}
+                <Line dataKey="total" name="합계" stroke="none" dot={false} legendType="none" isAnimationActive={false}>
+                  <LabelList
+                    dataKey="total"
+                    position="top"
+                    fill={labelColor}
+                    fontSize={13}
+                    fontWeight={700}
+                    formatter={labelNumber}
+                  />
+                </Line>
+              </ComposedChart>
             </ResponsiveContainer>
           </ChartCard>
         </div>
