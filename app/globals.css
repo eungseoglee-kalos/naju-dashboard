@@ -19,6 +19,12 @@
   }
 }
 
+html {
+  /* 사이트 전체 글자 크기 기준값. 기본 16px 대신 18px 정도로 올려서
+     윈도우 메뉴 정도의 크기가 되도록 한다 (rem 기반 클래스는 전부 같이 커진다). */
+  font-size: 112.5%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

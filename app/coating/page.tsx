@@ -421,28 +421,28 @@ export default function CoatingPage() {
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={monthlyTrend}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 12 }} />
+            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 14 }} />
             <YAxis
               yAxisId="left"
               domain={[0, qtyAxisMax]}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: 14 }}
               tickFormatter={labelNumber}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               domain={[0, 100]}
-              tick={{ fill: axisColor, fontSize: 12 }}
+              tick={{ fill: axisColor, fontSize: 14 }}
             />
             <Tooltip {...TOOLTIP_PROPS} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 12 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 14 }} />
             <Bar
               yAxisId="left"
               dataKey="total"
               name="생산수량"
               fill="#60a5fa"
             >
-              <LabelList dataKey="total" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
+              <LabelList dataKey="total" position="top" fill={labelColor} fontSize={13} formatter={labelNumber} />
             </Bar>
             <Line
               yAxisId="right"
@@ -456,7 +456,7 @@ export default function CoatingPage() {
                 dataKey="passRatePct"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 formatter={labelPercent}
               />
             </Line>
@@ -474,7 +474,7 @@ export default function CoatingPage() {
                 dataKey="scrapRatePct"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 formatter={labelPercent}
               />
             </Line>
@@ -487,15 +487,15 @@ export default function CoatingPage() {
           <p className="mb-4 text-sm font-semibold">차수별 합격률</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={roundRate}>
-              <XAxis dataKey="round" tick={{ fill: axisColor, fontSize: 12 }} />
-              <YAxis domain={[0, 100]} tick={{ fill: axisColor, fontSize: 12 }} />
+              <XAxis dataKey="round" tick={{ fill: axisColor, fontSize: 14 }} />
+              <YAxis domain={[0, 100]} tick={{ fill: axisColor, fontSize: 14 }} />
               <Tooltip {...TOOLTIP_PROPS} />
               <Bar dataKey="ratePct" name="합격률(%)" fill="#2563eb">
                 <LabelList
                   dataKey="ratePct"
                   position="top"
                   fill={labelColor}
-                  fontSize={12}
+                  fontSize={14}
                   formatter={labelPercent}
                 />
               </Bar>
@@ -525,7 +525,7 @@ export default function CoatingPage() {
                       x={x}
                       y={y}
                       fill={labelColor}
-                      fontSize={12}
+                      fontSize={14}
                       textAnchor={x > cx ? "start" : "end"}
                       dominantBaseline="central"
                     >
@@ -550,13 +550,13 @@ export default function CoatingPage() {
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                tick={{ fill: axisColor, fontSize: 12 }}
+                tick={{ fill: axisColor, fontSize: 14 }}
               />
               <YAxis
                 type="category"
                 dataKey="part"
-                width={100}
-                tick={{ fill: axisColor, fontSize: 11 }}
+                width={115}
+                tick={{ fill: axisColor, fontSize: 13 }}
               />
               <Tooltip {...TOOLTIP_PROPS} />
               <Bar dataKey="ratePct" name="합격률(%)" fill="#2563eb">
@@ -564,7 +564,7 @@ export default function CoatingPage() {
                   dataKey="ratePct"
                   position="right"
                   fill={labelColor}
-                  fontSize={11}
+                  fontSize={13}
                   formatter={labelPercent}
                 />
               </Bar>

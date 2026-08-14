@@ -376,21 +376,21 @@ export default function VmCoilPage() {
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={coilMonthly} margin={{ top: 20, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
+                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
                 <YAxis
-                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tick={{ fill: axisColor, fontSize: 13 }}
                   tickFormatter={labelNumber}
                 />
                 <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
                 <Bar dataKey="KBM" fill={COLOR_KBM}>
-                  <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Bar>
                 <Bar dataKey="외주" fill={COLOR_OUT}>
-                  <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Bar>
                 <Line dataKey="합계" stroke={COLOR_TOTAL} strokeWidth={2} dot={{ r: 3 }} connectNulls>
-                  <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Line>
               </ComposedChart>
             </ResponsiveContainer>
@@ -401,21 +401,21 @@ export default function VmCoilPage() {
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={yearly} margin={{ top: 20, right: 8 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="year" tick={{ fill: axisColor, fontSize: 11 }} />
+              <XAxis dataKey="year" tick={{ fill: axisColor, fontSize: 13 }} />
               <YAxis
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={labelNumber}
               />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               <Bar dataKey="KBM" fill={COLOR_KBM}>
-                <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Bar dataKey="외주" fill={COLOR_OUT}>
-                <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Line dataKey="합계" stroke={COLOR_TOTAL} strokeWidth={2} dot={{ r: 3 }} connectNulls>
-                <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Line>
             </ComposedChart>
           </ResponsiveContainer>
@@ -433,18 +433,18 @@ export default function VmCoilPage() {
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={yoy.data} margin={{ top: 24, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
-                <YAxis yAxisId="left" tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelPercent} />
+                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
+                <YAxis yAxisId="left" tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelPercent} />
                 <Tooltip {...TOOLTIP_PROPS} />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
                 {yoy.pair.map((y, i) => (
                   <Bar key={y} yAxisId="left" dataKey={y} name={`${y}년`} fill={i === 0 ? COLOR_OUT : COLOR_KBM}>
-                    <LabelList dataKey={y} position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                    <LabelList dataKey={y} position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                   </Bar>
                 ))}
                 <Line yAxisId="right" dataKey="증감율" stroke={COLOR_TOTAL} strokeWidth={2} dot={{ r: 3 }} connectNulls>
-                  <LabelList dataKey="증감율" position="top" fill={labelColor} fontSize={9} formatter={labelPercent} />
+                  <LabelList dataKey="증감율" position="top" fill={labelColor} fontSize={11} formatter={labelPercent} />
                 </Line>
               </ComposedChart>
             </ResponsiveContainer>
@@ -455,18 +455,18 @@ export default function VmCoilPage() {
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={forecast} margin={{ top: 24, right: 8 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fill: axisColor, fontSize: 11 }} />
-              <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+              <XAxis dataKey="name" tick={{ fill: axisColor, fontSize: 13 }} />
+              <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               <Bar dataKey="출하량" fill={COLOR_KBM}>
-                <LabelList dataKey="출하량" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="출하량" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Bar dataKey="수주잔량" fill={COLOR_BACKLOG}>
-                <LabelList dataKey="수주잔량" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="수주잔량" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Bar dataKey="예상출하량" fill={COLOR_FORECAST}>
-                <LabelList dataKey="예상출하량" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="예상출하량" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
             </ComposedChart>
           </ResponsiveContainer>
@@ -482,18 +482,18 @@ export default function VmCoilPage() {
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={materialMonthly} margin={{ top: 20, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
-                <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
+                <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
                 <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
                 <Bar dataKey="KBM" fill={COLOR_KBM}>
-                  <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="KBM" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Bar>
                 <Bar dataKey="외주" fill={COLOR_OUT}>
-                  <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="외주" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Bar>
                 <Line dataKey="합계" stroke={COLOR_TOTAL} strokeWidth={2} dot={{ r: 3 }} connectNulls>
-                  <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={9} formatter={labelNumber} />
+                  <LabelList dataKey="합계" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
                 </Line>
               </ComposedChart>
             </ResponsiveContainer>
@@ -545,7 +545,7 @@ function RatioPie({
                 x={x}
                 y={y}
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 textAnchor={x > cx ? "start" : "end"}
                 dominantBaseline="central"
               >
@@ -559,7 +559,7 @@ function RatioPie({
           ))}
         </Pie>
         <Tooltip {...TOOLTIP_PROPS} formatter={(v) => `${Math.round(Number(v)).toLocaleString()} kg`} />
-        <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+        <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
       </PieChart>
     </ResponsiveContainer>
   );

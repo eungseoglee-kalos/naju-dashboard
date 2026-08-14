@@ -377,10 +377,10 @@ export default function MeshQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -393,7 +393,7 @@ export default function MeshQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -418,10 +418,10 @@ export default function MeshQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={dailyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -434,7 +434,7 @@ export default function MeshQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -457,11 +457,11 @@ export default function MeshQualityPage() {
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={partDefectRate} margin={{ top: 20, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="part" tick={{ fill: axisColor, fontSize: 11 }} />
-              <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+              <XAxis dataKey="part" tick={{ fill: axisColor, fontSize: 13 }} />
+              <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
               <Bar dataKey="ppm" name="불량률(PPM)" fill="#0891b2">
-                <LabelList dataKey="ppm" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="ppm" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Line
                 dataKey="품질목표"
@@ -503,7 +503,7 @@ export default function MeshQualityPage() {
                         x={x}
                         y={y}
                         fill={labelColor}
-                        fontSize={11}
+                        fontSize={13}
                         textAnchor={x > cx ? "start" : "end"}
                         dominantBaseline="central"
                       >

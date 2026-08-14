@@ -382,10 +382,10 @@ export default function VmQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -398,7 +398,7 @@ export default function VmQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -423,10 +423,10 @@ export default function VmQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={dailyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -439,7 +439,7 @@ export default function VmQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -461,14 +461,14 @@ export default function VmQualityPage() {
           <p className="mb-4 text-sm font-semibold">형상별 불량률 (PPM)</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={shapeDefectRate} layout="vertical" margin={{ right: 40 }}>
-              <XAxis type="number" tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
-              <YAxis type="category" dataKey="shape" width={70} tick={{ fill: axisColor, fontSize: 12 }} />
+              <XAxis type="number" tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
+              <YAxis type="category" dataKey="shape" width={80} tick={{ fill: axisColor, fontSize: 14 }} />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
               <Bar dataKey="ppm" name="불량률(PPM)">
                 {shapeDefectRate.map((d) => (
                   <Cell key={d.shape} fill={SHAPE_COLORS[d.shape] ?? "#0891b2"} />
                 ))}
-                <LabelList dataKey="ppm" position="right" fill={labelColor} fontSize={11} formatter={labelNumber} />
+                <LabelList dataKey="ppm" position="right" fill={labelColor} fontSize={13} formatter={labelNumber} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

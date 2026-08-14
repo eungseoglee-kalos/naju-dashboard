@@ -395,10 +395,10 @@ export default function ConnectorQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -411,7 +411,7 @@ export default function ConnectorQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -436,10 +436,10 @@ export default function ConnectorQualityPage() {
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={dailyTrend} margin={{ top: 20, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 11 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 13 }} />
+            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
             <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
             {PROCESS_ORDER.map((proc) => (
               <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
             ))}
@@ -452,7 +452,7 @@ export default function ConnectorQualityPage() {
                 dataKey="합계"
                 position="top"
                 fill={labelColor}
-                fontSize={11}
+                fontSize={13}
                 fontWeight={700}
                 formatter={labelNumber}
               />
@@ -475,11 +475,11 @@ export default function ConnectorQualityPage() {
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={partDefectRate} margin={{ top: 20, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="part" tick={{ fill: axisColor, fontSize: 11 }} />
-              <YAxis tick={{ fill: axisColor, fontSize: 11 }} tickFormatter={labelNumber} />
+              <XAxis dataKey="part" tick={{ fill: axisColor, fontSize: 13 }} />
+              <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
               <Bar dataKey="ppm" name="불량률(PPM)" fill="#0891b2">
-                <LabelList dataKey="ppm" position="top" fill={labelColor} fontSize={10} formatter={labelNumber} />
+                <LabelList dataKey="ppm" position="top" fill={labelColor} fontSize={12} formatter={labelNumber} />
               </Bar>
               <Line
                 dataKey="품질목표"
@@ -497,17 +497,17 @@ export default function ConnectorQualityPage() {
           <p className="mb-4 text-sm font-semibold">품번별 생산 비율</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={[partShare.row]} layout="vertical" margin={{ top: 20 }}>
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: axisColor, fontSize: 11 }} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fill: axisColor, fontSize: 13 }} />
               <YAxis type="category" dataKey="name" hide />
               <Tooltip {...TOOLTIP_PROPS} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               {partShare.parts.map((code, i) => (
                 <Bar key={code} dataKey={code} name={code} stackId="share" fill={PART_COLORS[i % PART_COLORS.length]}>
                   <LabelList
                     dataKey={code}
                     position="center"
                     fill="#ffffff"
-                    fontSize={10}
+                    fontSize={12}
                     formatter={(v: unknown) => (Number(v) >= 3 ? `${v}%` : "")}
                   />
                 </Bar>

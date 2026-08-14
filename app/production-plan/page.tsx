@@ -413,13 +413,13 @@ export default function ProductionPlanPage() {
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 interval="preserveStartEnd"
               />
               <YAxis
                 domain={monthlyAxis.domain}
                 ticks={monthlyAxis.ticks}
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={labelPercent}
               />
               <Tooltip {...TOOLTIP_PROPS}
@@ -439,7 +439,7 @@ export default function ProductionPlanPage() {
                   dataKey="ratePct"
                   position="top"
                   fill={labelColor}
-                  fontSize={10}
+                  fontSize={12}
                   formatter={labelPercent}
                 />
               </Line>
@@ -456,17 +456,17 @@ export default function ProductionPlanPage() {
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis
                 dataKey="month"
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 interval="preserveStartEnd"
               />
               <YAxis
                 domain={deptAxis.domain}
                 ticks={deptAxis.ticks}
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={labelPercent}
               />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelPercent} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               {deptTrend.depts.map((dept, i) => (
                 <Line
                   key={dept}
@@ -495,14 +495,14 @@ export default function ProductionPlanPage() {
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={(v) => `${v}%`}
               />
               <YAxis
                 type="category"
                 dataKey="process"
-                width={130}
-                tick={{ fill: axisColor, fontSize: 10 }}
+                width={145}
+                tick={{ fill: axisColor, fontSize: 12 }}
               />
               <Tooltip {...TOOLTIP_PROPS}
                 formatter={(v, _n, item) => [
@@ -515,7 +515,7 @@ export default function ProductionPlanPage() {
                   dataKey="ratePct"
                   position="right"
                   fill={labelColor}
-                  fontSize={10}
+                  fontSize={12}
                   formatter={labelPercent}
                 />
               </Bar>
@@ -586,7 +586,7 @@ export default function ProductionPlanPage() {
                         x={x}
                         y={y + offset}
                         fill={labelColor}
-                        fontSize={11}
+                        fontSize={13}
                         textAnchor={x > cx ? "start" : "end"}
                         dominantBaseline="central"
                       >
@@ -613,7 +613,7 @@ export default function ProductionPlanPage() {
                     String(item?.payload?.name ?? "비중"),
                   ]}
                 />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               </PieChart>
             </ResponsiveContainer>
           )}

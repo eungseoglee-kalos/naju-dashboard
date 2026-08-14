@@ -422,19 +422,19 @@ export default function ShipmentDashboard({
             <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
+                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
                 <YAxis
-                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tick={{ fill: axisColor, fontSize: 13 }}
                   tickFormatter={labelNumber}
                 />
                 <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
                 <Bar dataKey={CATEGORY_DEV} name="개발" fill={COLOR_DEV}>
                   <LabelList
                     dataKey={CATEGORY_DEV}
                     position="top"
                     fill={labelColor}
-                    fontSize={10}
+                    fontSize={12}
                     formatter={labelNumber}
                   />
                 </Bar>
@@ -443,7 +443,7 @@ export default function ShipmentDashboard({
                     dataKey={CATEGORY_MASS}
                     position="top"
                     fill={labelColor}
-                    fontSize={10}
+                    fontSize={12}
                     formatter={labelNumber}
                   />
                 </Bar>
@@ -454,12 +454,14 @@ export default function ShipmentDashboard({
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   connectNulls
+                  isAnimationActive={false}
                 >
                   <LabelList
                     dataKey="total"
                     position="top"
                     fill={labelColor}
-                    fontSize={10}
+                    fontSize={13}
+                    fontWeight={700}
                     formatter={labelNumber}
                   />
                 </Line>
@@ -472,19 +474,19 @@ export default function ShipmentDashboard({
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={forecastSplit} margin={{ top: 20, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" tick={{ fill: axisColor, fontSize: 11 }} />
+              <XAxis dataKey="name" tick={{ fill: axisColor, fontSize: 13 }} />
               <YAxis
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={labelNumber}
               />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               <Bar dataKey={CATEGORY_DEV} name="개발" fill={COLOR_DEV}>
                 <LabelList
                   dataKey={CATEGORY_DEV}
                   position="top"
                   fill={labelColor}
-                  fontSize={11}
+                  fontSize={13}
                   formatter={labelNumber}
                 />
               </Bar>
@@ -493,7 +495,7 @@ export default function ShipmentDashboard({
                   dataKey={CATEGORY_MASS}
                   position="top"
                   fill={labelColor}
-                  fontSize={11}
+                  fontSize={13}
                   formatter={labelNumber}
                 />
               </Bar>
@@ -502,7 +504,7 @@ export default function ShipmentDashboard({
                   dataKey="total"
                   position="top"
                   fill={labelColor}
-                  fontSize={11}
+                  fontSize={13}
                   formatter={labelNumber}
                 />
               </Bar>
@@ -515,13 +517,13 @@ export default function ShipmentDashboard({
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={vendorTrend.data} margin={{ top: 20, right: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 11 }} />
+                <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 13 }} />
                 <YAxis
-                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tick={{ fill: axisColor, fontSize: 13 }}
                   tickFormatter={labelNumber}
                 />
                 <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-                <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+                <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
                 {vendorTrend.vendors.map((v, i) => (
                   <Bar
                     key={v}
@@ -534,7 +536,7 @@ export default function ShipmentDashboard({
                       dataKey={v}
                       position="center"
                       fill="#ffffff"
-                      fontSize={10}
+                      fontSize={12}
                       formatter={labelNumber}
                     />
                   </Bar>
@@ -571,7 +573,7 @@ export default function ShipmentDashboard({
                         x={x}
                         y={y}
                         fill={labelColor}
-                        fontSize={11}
+                        fontSize={13}
                         textAnchor={x > cx ? "start" : "end"}
                         dominantBaseline="central"
                       >
@@ -603,14 +605,14 @@ export default function ShipmentDashboard({
               >
                 <XAxis
                   type="number"
-                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tick={{ fill: axisColor, fontSize: 13 }}
                   tickFormatter={labelNumber}
                 />
                 <YAxis
                   type="category"
                   dataKey="part"
-                  width={110}
-                  tick={{ fill: axisColor, fontSize: 10 }}
+                  width={125}
+                  tick={{ fill: axisColor, fontSize: 12 }}
                 />
                 <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
                 <Bar dataKey="qty" name="출하량" fill={COLOR_DEV}>
@@ -618,7 +620,7 @@ export default function ShipmentDashboard({
                     dataKey="qty"
                     position="right"
                     fill={labelColor}
-                    fontSize={10}
+                    fontSize={12}
                     formatter={labelNumber}
                   />
                 </Bar>
@@ -634,13 +636,13 @@ export default function ShipmentDashboard({
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={vendorMonthlyAvg.data} margin={{ top: 20 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="vendor" tick={{ fill: axisColor, fontSize: 10 }} />
+              <XAxis dataKey="vendor" tick={{ fill: axisColor, fontSize: 12 }} />
               <YAxis
-                tick={{ fill: axisColor, fontSize: 11 }}
+                tick={{ fill: axisColor, fontSize: 13 }}
                 tickFormatter={labelNumber}
               />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 11 }} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
               {vendorMonthlyAvg.years.map((y, i) => (
                 <Bar
                   key={y}
@@ -652,7 +654,7 @@ export default function ShipmentDashboard({
                     dataKey={y}
                     position="top"
                     fill={labelColor}
-                    fontSize={10}
+                    fontSize={12}
                     formatter={labelNumber}
                   />
                 </Bar>
