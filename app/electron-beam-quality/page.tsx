@@ -59,6 +59,22 @@ function qualityTargetForYear(year: string): number {
   return target;
 }
 
+// 전자빔 필라멘트(품번)별 품질목표. 2023~2024년은 품번마다 목표가 따로
+// 있었고, 2025년부터는 전 품번이 회사 전체 목표(QUALITY_TARGET_BY_YEAR)로
+// 통일됐다 -- 그래서 여기엔 2023/2024년 값만 둔다.
+const PART_TARGET_BY_YEAR: Record<string, Record<string, number>> = {
+  "0011": { "2023": 13000, "2024": 13000 },
+  "0021": { "2023": 25000, "2024": 18000 },
+  "0031": { "2023": 15000, "2024": 15000 },
+  "0041": { "2023": 40000, "2024": 30000 },
+  "0240": { "2023": 30000, "2024": 30000 },
+};
+
+// 품번별 표에 없는 해(2025년 이후)나 품번(예: 0270)은 회사 전체 목표를 쓴다.
+function partQualityTarget(code: string, year: string): number {
+  return PART_TARGET_BY_YEAR[code]?.[year] ?? qualityTargetForYear(year);
+}
+
 const INSPECTION_PROCESSES = new Set(["전자빔검사"]);
 const NON_INSPECTION_PROCESSES = new Set([
   "전자빔세척",
@@ -298,7 +314,7 @@ export default function ElectronBeamQualityPage() {
         const recs = filtered.filter((r) => r.part_code === code);
         const total = recs.reduce((a, r) => a + r.qty_total, 0);
         const defect = recs.reduce((a, r) => a + r.qty_defect, 0);
-        return { part: code, ppm: ppm(defect, total), 품질목표: qualityTargetForYear(year) };
+        return { part: code, ppm: ppm(defect, total), 품질목표: partQualityTarget(code, year) };
       })
       .filter((d) => d.ppm !== null && d.ppm > 0);
   }, [partCodes, filtered, year]);
