@@ -86,15 +86,18 @@ function ppm(defect: number, total: number): number | null {
   return total === 0 ? null : Math.round((defect / total) * 1_000_000);
 }
 
-// 월간/일간 차트의 막대 맨 위에 합계를 보여주기 위한 값. 쌓인 막대의 실제
-// 높이는 공정별 PPM들의 합이므로(각자 PPM을 구해 쌓는 방식), 그 합을 그대로
-// 더해서 구한다.
-function stackedTotal(row: Record<string, number | string | null>): number {
-  return PROCESS_ORDER.reduce((sum, proc) => {
-    const v = row[proc];
-    return sum + (typeof v === "number" ? v : 0);
-  }, 0);
+// 당월 기준 과거 count개월의 "YYYY-MM" 키 목록(오래된 순). 실제 마지막
+// 실적이 당월보다 오래됐어도 항상 오늘 날짜 기준으로 채운다.
+function pastMonthKeys(count: number): string[] {
+  const now = new Date();
+  const keys: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return keys;
 }
+
 
 async function fetchAll<T>(table: string, columns: string): Promise<T[]> {
   const supabase = createClient();
@@ -184,6 +187,8 @@ export default function VmQualityPage() {
     // 것이다 (실적이 없는 공정은 0으로 취급하되, 그룹 전체에 실적이 하나도
     // 없으면 "-"를 보여줘야 하므로 null로 구분한다).
     const groupPpm = (procs: Set<string>) => {
+      // 공정마다 먼저 반올림한 값을 더하면 원본 엑셀의 합계와 반올림 오차로
+      // 어긋날 수 있어서, 반올림 전 비율을 다 더한 뒤 마지막에 한 번만 반올림한다.
       let sum = 0;
       let anyQty = false;
       for (const proc of procs) {
@@ -192,9 +197,9 @@ export default function VmQualityPage() {
         if (total === 0) continue;
         anyQty = true;
         const defect = recs.reduce((a, r) => a + r.qty_defect, 0);
-        sum += Math.round((defect / total) * 1_000_000);
+        sum += (defect / total) * 1_000_000;
       }
-      return anyQty ? sum : null;
+      return anyQty ? Math.round(sum) : null;
     };
 
     const processPpm = groupPpm(NON_INSPECTION_PROCESSES);
@@ -206,7 +211,8 @@ export default function VmQualityPage() {
     return { processPpm, inspectionPpm, achievementPct };
   }, [filtered]);
 
-  // 연도/월 필터를 무시하고 최근 24개월을 본다 -- 다른 품질 대시보드와 같은 이유.
+  // 연도/월 필터를 무시하고 당월 기준 과거 12개월을 본다 -- 실적이 없는
+  // 달도 빈 칸으로 그대로 채워서 항상 오늘 기준 12개월 폭을 유지한다.
   const monthlyTrend = useMemo(() => {
     if (!records) return [];
     const byMonth = new Map<string, VmRecord[]>();
@@ -215,21 +221,23 @@ export default function VmQualityPage() {
       if (!byMonth.has(key)) byMonth.set(key, []);
       byMonth.get(key)!.push(r);
     }
-    return Array.from(byMonth.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-24)
-      .map(([key, recs]) => {
+    return pastMonthKeys(12).map((key) => {
+        const recs = byMonth.get(key) ?? [];
         const row: Record<string, number | string | null> = {
           month: key.slice(2),
         };
+        let totalRatio = 0;
         for (const proc of PROCESS_ORDER) {
           const procRecs = recs.filter((r) => r.process === proc);
           const total = procRecs.reduce((a, r) => a + r.qty_total, 0);
           const defect = procRecs.reduce((a, r) => a + r.qty_defect, 0);
           row[proc] = ppm(defect, total);
+          if (total > 0) totalRatio += (defect / total) * 1_000_000;
         }
         row.품질목표 = QUALITY_TARGET_PPM;
-        row.합계 = stackedTotal(row);
+        // 공정마다 반올림한 값을 더하면 원본 엑셀 합계와 반올림 오차로 어긋날
+        // 수 있어서, 반올림 전 비율을 다 더한 뒤 마지막에 한 번만 반올림한다.
+        row.합계 = Math.round(totalRatio);
         return row;
       });
   }, [records]);
@@ -246,14 +254,16 @@ export default function VmQualityPage() {
         const row: Record<string, number | string | null> = {
           date: date.slice(5),
         };
+        let totalRatio = 0;
         for (const proc of PROCESS_ORDER) {
           const procRecs = recs.filter((r) => r.process === proc);
           const total = procRecs.reduce((a, r) => a + r.qty_total, 0);
           const defect = procRecs.reduce((a, r) => a + r.qty_defect, 0);
           row[proc] = ppm(defect, total);
+          if (total > 0) totalRatio += (defect / total) * 1_000_000;
         }
         row.품질목표 = QUALITY_TARGET_PPM;
-        row.합계 = stackedTotal(row);
+        row.합계 = Math.round(totalRatio);
         return row;
       });
   }, [filtered]);
@@ -377,7 +387,7 @@ export default function VmQualityPage() {
       <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
         <p className="mb-1 text-sm font-semibold">VM 월간 불량률</p>
         <p className="mb-3 text-xs text-foreground/50">
-          최근 24개월 · 공정별 PPM, 단위: PPM
+          당월 기준 과거 12개월 · 공정별 PPM, 단위: PPM
         </p>
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>

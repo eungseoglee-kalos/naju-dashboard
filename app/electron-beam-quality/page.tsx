@@ -40,9 +40,24 @@ type DefectDetail = {
   qty_defect: number;
 };
 
-// 품질목표는 참고 화면에서 87,000 PPM 으로 고정돼 있다 (커넥터와 마찬가지로
-// 실적에 따라 바뀌는 값이 아니라 회사가 정한 기준선).
-const QUALITY_TARGET_PPM = 87000;
+// 품질목표는 회사가 매년 다시 잡는 기준선이라 연도별로 다르다.
+const QUALITY_TARGET_BY_YEAR: Record<string, number> = {
+  "2024": 21200,
+  "2025": 22950,
+  "2026": 87000,
+};
+const QUALITY_TARGET_YEARS = Object.keys(QUALITY_TARGET_BY_YEAR).sort();
+
+// 표에 없는 해(그 이전 과거, 또는 표에 아직 안 올라온 미래)는 그 시점에서
+// 가장 최근에 정해진 목표값을 그대로 쓴다. year가 "all"이면 가장 최신 목표를 쓴다.
+function qualityTargetForYear(year: string): number {
+  let target = QUALITY_TARGET_BY_YEAR[QUALITY_TARGET_YEARS[0]];
+  for (const y of QUALITY_TARGET_YEARS) {
+    if (y > year) break;
+    target = QUALITY_TARGET_BY_YEAR[y];
+  }
+  return target;
+}
 
 const INSPECTION_PROCESSES = new Set(["전자빔검사"]);
 const NON_INSPECTION_PROCESSES = new Set([
@@ -87,14 +102,16 @@ function ppm(defect: number, total: number): number | null {
   return total === 0 ? null : Math.round((defect / total) * 1_000_000);
 }
 
-// 월간/일간 차트의 막대 맨 위에 합계를 보여주기 위한 값. 쌓인 막대의 실제
-// 높이는 공정별 PPM들의 합이므로(각자 PPM을 구해 쌓는 방식), 그 합을 그대로
-// 더해서 구한다.
-function stackedTotal(row: Record<string, number | string | null>): number {
-  return PROCESS_ORDER.reduce((sum, proc) => {
-    const v = row[proc];
-    return sum + (typeof v === "number" ? v : 0);
-  }, 0);
+// 당월 기준 과거 count개월의 "YYYY-MM" 키 목록(오래된 순). 실제 마지막
+// 실적이 당월보다 오래됐어도 항상 오늘 날짜 기준으로 채운다.
+function pastMonthKeys(count: number): string[] {
+  const now = new Date();
+  const keys: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return keys;
 }
 
 async function fetchAll<T>(table: string, columns: string): Promise<T[]> {
@@ -185,6 +202,8 @@ export default function ElectronBeamQualityPage() {
     // 것이다 (실적이 없는 공정은 0으로 취급하되, 그룹 전체에 실적이 하나도
     // 없으면 "-"를 보여줘야 하므로 null로 구분한다).
     const groupPpm = (procs: Set<string>) => {
+      // 공정마다 먼저 반올림한 값을 더하면 원본 엑셀의 합계와 반올림 오차로
+      // 어긋날 수 있어서, 반올림 전 비율을 다 더한 뒤 마지막에 한 번만 반올림한다.
       let sum = 0;
       let anyQty = false;
       for (const proc of procs) {
@@ -193,21 +212,23 @@ export default function ElectronBeamQualityPage() {
         if (total === 0) continue;
         anyQty = true;
         const defect = recs.reduce((a, r) => a + r.qty_defect, 0);
-        sum += Math.round((defect / total) * 1_000_000);
+        sum += (defect / total) * 1_000_000;
       }
-      return anyQty ? sum : null;
+      return anyQty ? Math.round(sum) : null;
     };
 
     const processPpm = groupPpm(NON_INSPECTION_PROCESSES);
     const inspectionPpm = groupPpm(INSPECTION_PROCESSES);
     const combinedPpm = (processPpm ?? 0) + (inspectionPpm ?? 0);
+    const target = qualityTargetForYear(year);
     const achievementPct =
-      combinedPpm === 0 ? null : Math.round((QUALITY_TARGET_PPM / combinedPpm) * 100);
+      combinedPpm === 0 ? null : Math.round((target / combinedPpm) * 100);
 
-    return { processPpm, inspectionPpm, achievementPct };
-  }, [filtered]);
+    return { processPpm, inspectionPpm, achievementPct, target };
+  }, [filtered, year]);
 
-  // 연도/월 필터를 무시하고 최근 24개월을 본다 -- 커넥터 대시보드와 같은 이유.
+  // 연도/월 필터를 무시하고 당월 기준 과거 12개월을 본다 -- 실적이 없는
+  // 달도 빈 칸으로 그대로 채워서 항상 오늘 기준 12개월 폭을 유지한다.
   const monthlyTrend = useMemo(() => {
     if (!records) return [];
     const byMonth = new Map<string, BeamRecord[]>();
@@ -216,21 +237,23 @@ export default function ElectronBeamQualityPage() {
       if (!byMonth.has(key)) byMonth.set(key, []);
       byMonth.get(key)!.push(r);
     }
-    return Array.from(byMonth.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-24)
-      .map(([key, recs]) => {
+    return pastMonthKeys(12).map((key) => {
+        const recs = byMonth.get(key) ?? [];
         const row: Record<string, number | string | null> = {
           month: key.slice(2),
         };
+        let totalRatio = 0;
         for (const proc of PROCESS_ORDER) {
           const procRecs = recs.filter((r) => r.process === proc);
           const total = procRecs.reduce((a, r) => a + r.qty_total, 0);
           const defect = procRecs.reduce((a, r) => a + r.qty_defect, 0);
           row[proc] = ppm(defect, total);
+          if (total > 0) totalRatio += (defect / total) * 1_000_000;
         }
-        row.품질목표 = QUALITY_TARGET_PPM;
-        row.합계 = stackedTotal(row);
+        row.품질목표 = qualityTargetForYear(key.slice(0, 4));
+        // 공정마다 반올림한 값을 더하면 원본 엑셀 합계와 반올림 오차로 어긋날
+        // 수 있어서, 반올림 전 비율을 다 더한 뒤 마지막에 한 번만 반올림한다.
+        row.합계 = Math.round(totalRatio);
         return row;
       });
   }, [records]);
@@ -248,14 +271,16 @@ export default function ElectronBeamQualityPage() {
         const row: Record<string, number | string | null> = {
           date: date.slice(5),
         };
+        let totalRatio = 0;
         for (const proc of PROCESS_ORDER) {
           const procRecs = recs.filter((r) => r.process === proc);
           const total = procRecs.reduce((a, r) => a + r.qty_total, 0);
           const defect = procRecs.reduce((a, r) => a + r.qty_defect, 0);
           row[proc] = ppm(defect, total);
+          if (total > 0) totalRatio += (defect / total) * 1_000_000;
         }
-        row.품질목표 = QUALITY_TARGET_PPM;
-        row.합계 = stackedTotal(row);
+        row.품질목표 = qualityTargetForYear(date.slice(0, 4));
+        row.합계 = Math.round(totalRatio);
         return row;
       });
   }, [filtered]);
@@ -273,10 +298,10 @@ export default function ElectronBeamQualityPage() {
         const recs = filtered.filter((r) => r.part_code === code);
         const total = recs.reduce((a, r) => a + r.qty_total, 0);
         const defect = recs.reduce((a, r) => a + r.qty_defect, 0);
-        return { part: code, ppm: ppm(defect, total), 품질목표: QUALITY_TARGET_PPM };
+        return { part: code, ppm: ppm(defect, total), 품질목표: qualityTargetForYear(year) };
       })
       .filter((d) => d.ppm !== null && d.ppm > 0);
-  }, [partCodes, filtered]);
+  }, [partCodes, filtered, year]);
 
   // 참고 화면은 이 차트를 "형상별 생산 비율" 파이로 그렸고, 짧은 코드가
   // 아니라 품목 코드 전체(GWELE0031 등)로 구분한다.
@@ -373,7 +398,7 @@ export default function ElectronBeamQualityPage() {
           value={kpi.inspectionPpm === null ? "-" : kpi.inspectionPpm.toLocaleString()}
           color="red"
         />
-        <KpiCard label="품질목표 (PPM)" value={QUALITY_TARGET_PPM.toLocaleString()} color="amber" />
+        <KpiCard label="품질목표 (PPM)" value={kpi.target.toLocaleString()} color="amber" />
         <KpiCard
           label="품질목표 달성률"
           value={kpi.achievementPct === null ? "-" : `${kpi.achievementPct}%`}
@@ -384,7 +409,7 @@ export default function ElectronBeamQualityPage() {
       <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
         <p className="mb-1 text-sm font-semibold">전자빔 월간 불량률</p>
         <p className="mb-3 text-xs text-foreground/50">
-          최근 24개월 · 공정별 PPM, 단위: PPM
+          당월 기준 과거 12개월 · 공정별 PPM, 단위: PPM
         </p>
         <ResponsiveContainer width="100%" height={320}>
           <ComposedChart data={monthlyTrend} margin={{ top: 20, right: 12 }}>
