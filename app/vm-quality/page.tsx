@@ -529,7 +529,10 @@ export default function VmQualityPage() {
               />
               <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
               <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
+              {/* 기본 itemSorter가 "value"라 라벨을 한글 가나다순으로 다시
+                  정렬해버린다("실적수량"이 "품질목표"보다 앞에 옴) -- 막대
+                  순서(품질목표가 왼쪽)와 맞추려면 정렬을 꺼야 한다. */}
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} itemSorter={null} />
               <Bar dataKey="품질목표" name="품질목표" fill="#f97316" isAnimationActive={false}>
                 <LabelList dataKey="품질목표" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
               </Bar>
