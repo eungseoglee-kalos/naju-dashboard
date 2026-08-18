@@ -59,6 +59,38 @@ const PROCESS_COLORS: Record<string, string> = {
 };
 const PROCESS_ORDER = Object.keys(PROCESS_COLORS);
 
+// 공정별 품질목표. 2026년은 상반기 도중에 목표가 다시 잡혀서 1분기/2분기
+// 이후로 나뉜다. 프레스·코일링은 2025년까지는 목표 자체가 없었다(참고 표에
+// "-").
+type ProcessTargets = Record<string, number>;
+
+const PROCESS_TARGETS: { period: string; targets: ProcessTargets }[] = [
+  { period: "2023", targets: { "V/M 검사": 1200, 프레스: 0, 토션기: 300, 코일링: 0, 절단: 1100, 권선: 500 } },
+  { period: "2024", targets: { "V/M 검사": 780, 프레스: 0, 토션기: 680, 코일링: 0, 절단: 1100, 권선: 450 } },
+  { period: "2025", targets: { "V/M 검사": 640, 프레스: 0, 토션기: 680, 코일링: 0, 절단: 1100, 권선: 450 } },
+  { period: "2026-Q1", targets: { "V/M 검사": 590, 프레스: 100, 토션기: 650, 코일링: 100, 절단: 1100, 권선: 450 } },
+  { period: "2026-Q2", targets: { "V/M 검사": 590, 프레스: 300, 토션기: 650, 코일링: 100, 절단: 1100, 권선: 450 } },
+];
+
+// 선택한 연도/월에 맞는 공정별 목표를 고른다. 2026년만 1~3월/4~12월로
+// 나뉘고 그 외 해는 연 단위 하나다. 표에 없는 해(2023년 이전)나 "전체"는
+// 가장 최신인 2026년 2분기 이후 값을 그대로 쓴다.
+function processTargetsFor(year: string, month: string): ProcessTargets {
+  let period: string;
+  if (year === "2026") {
+    const m = month === "all" ? null : Number(month);
+    period = m !== null && m <= 3 ? "2026-Q1" : "2026-Q2";
+  } else if (year === "2023" || year === "2024" || year === "2025") {
+    period = year;
+  } else {
+    period = "2026-Q2";
+  }
+  return (
+    PROCESS_TARGETS.find((p) => p.period === period)?.targets ??
+    PROCESS_TARGETS[PROCESS_TARGETS.length - 1].targets
+  );
+}
+
 const DEFECT_TYPES = [
   "공정불량",
   "권선피치불량",
@@ -268,6 +300,18 @@ export default function VmQualityPage() {
       });
   }, [filtered]);
 
+  // 공정별 품질목표 대비 실적. 형상이 아니라 공정 단위로 보는 별도 차트라
+  // shapeDefectRate와는 독립적으로, 선택한 연도/월 필터를 그대로 따른다.
+  const processDefectRate = useMemo(() => {
+    const targets = processTargetsFor(year, month);
+    return PROCESS_ORDER.map((proc) => {
+      const recs = filtered.filter((r) => r.process === proc);
+      const total = recs.reduce((a, r) => a + r.qty_total, 0);
+      const defect = recs.reduce((a, r) => a + r.qty_defect, 0);
+      return { process: proc, 실적수량: ppm(defect, total) ?? 0, 품질목표: targets[proc] ?? 0 };
+    });
+  }, [filtered, year, month]);
+
   const shapes = useMemo(() => {
     if (!records) return [];
     return Array.from(new Set(records.map((r) => r.shape))).sort();
@@ -425,49 +469,80 @@ export default function VmQualityPage() {
         </ResponsiveContainer>
       </div>
 
-      <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
-        <p className="mb-1 text-sm font-semibold">VM 일간 불량률</p>
-        <p className="mb-3 text-xs text-foreground/50">
-          선택한 기간 · 공정별 PPM, 단위: PPM
-        </p>
-        <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={dailyTrend} margin={{ top: 20, right: 12 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 13 }} />
-            <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
-            <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
-            {PROCESS_ORDER.map((proc) => (
-              <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
-            ))}
-            {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
-                0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
-                찍는 선(보이지는 않게)에 라벨만 얹는다 -- 그 y 좌표가 곧 쌓인
-                막대의 맨 위다. */}
-            <Line dataKey="합계" name="합계" stroke="none" dot={false} legendType="none" isAnimationActive={false}>
-              <LabelList
-                dataKey="합계"
-                position="top"
-                fill={labelColor}
-                fontSize={13}
-                fontWeight={700}
-                formatter={labelNumber}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-lg border border-black/10 p-4 dark:border-white/10 xl:col-span-2">
+          <p className="mb-1 text-sm font-semibold">VM 일간 불량률</p>
+          <p className="mb-3 text-xs text-foreground/50">
+            선택한 기간 · 공정별 PPM, 단위: PPM
+          </p>
+          <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={dailyTrend} margin={{ top: 20, right: 12 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="date" tick={{ fill: axisColor, fontSize: 13 }} />
+              <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
+              <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
+              {PROCESS_ORDER.map((proc) => (
+                <Bar key={proc} dataKey={proc} name={proc} stackId="proc" fill={PROCESS_COLORS[proc]} />
+              ))}
+              {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
+                  0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
+                  찍는 선(보이지는 않게)에 라벨만 얹는다 -- 그 y 좌표가 곧 쌓인
+                  막대의 맨 위다. */}
+              <Line dataKey="합계" name="합계" stroke="none" dot={false} legendType="none" isAnimationActive={false}>
+                <LabelList
+                  dataKey="합계"
+                  position="top"
+                  fill={labelColor}
+                  fontSize={13}
+                  fontWeight={700}
+                  formatter={labelNumber}
+                />
+              </Line>
+              <Line
+                dataKey="품질목표"
+                name="품질목표"
+                stroke="#dc2626"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                dot={false}
               />
-            </Line>
-            <Line
-              dataKey="품질목표"
-              name="품질목표"
-              stroke="#dc2626"
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              dot={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
+          <p className="mb-1 text-sm font-semibold">주요 공정별 불량률</p>
+          <p className="mb-3 text-xs text-foreground/50">
+            선택한 기간 · 품질목표 대비 실적, 단위: PPM
+          </p>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={processDefectRate} margin={{ top: 20, right: 12 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis
+                dataKey="process"
+                interval={0}
+                tick={{ fill: axisColor, fontSize: 11 }}
+                angle={-20}
+                textAnchor="end"
+                height={40}
+              />
+              <YAxis tick={{ fill: axisColor, fontSize: 13 }} tickFormatter={labelNumber} />
+              <Tooltip {...TOOLTIP_PROPS} formatter={labelNumber} />
+              <Legend wrapperStyle={{ color: axisColor, fontSize: 13 }} />
+              <Bar dataKey="품질목표" name="품질목표" fill="#f97316" isAnimationActive={false}>
+                <LabelList dataKey="품질목표" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
+              </Bar>
+              <Bar dataKey="실적수량" name="실적수량" fill="#eab308" isAnimationActive={false}>
+                <LabelList dataKey="실적수량" position="top" fill={labelColor} fontSize={11} formatter={labelNumber} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-lg border border-black/10 p-4 dark:border-white/10 xl:col-span-2">
           <p className="mb-4 text-sm font-semibold">형상별 불량률 (PPM)</p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={shapeDefectRate} layout="vertical" margin={{ right: 40 }}>
