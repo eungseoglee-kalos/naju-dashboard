@@ -5,6 +5,7 @@ export type CoatingRow = {
   coating_date: string;
   part_number: string;
   serial_no: string | null;
+  spec: string | null;
   coating_round: string;
   round_no: number | null;
   position: string | null;
@@ -63,6 +64,10 @@ function parseRoundNo(v: unknown): number | null {
 // coating/inspection event. Every row is kept as-is (no deduplication) --
 // rows that look like duplicates (same LOT + round) turned out to be
 // genuine separate records (re-tests / split F-R handling).
+//
+// 2026-08-21에 "Serial No" 바로 다음에 "규격" 열이 새로 추가돼서, 그 뒤
+// 모든 열의 인덱스가 하나씩 밀렸다(코팅LOT, 코팅일자, 품번, Serial No, 규격,
+// 코팅차수, 위치, 방향, ...).
 export const COATING_SHEET = "코팅현황";
 
 export function parseCoatingExcel(buffer: ArrayBuffer): CoatingRow[] {
@@ -89,20 +94,21 @@ export function parseCoatingExcel(buffer: ArrayBuffer): CoatingRow[] {
       coating_date: coatingDate,
       part_number: toStr(row[2]) ?? "",
       serial_no: toStr(row[3]),
-      coating_round: toStr(row[4]) ?? "",
-      round_no: parseRoundNo(row[4]),
-      position: toStr(row[5]),
-      direction: toStr(row[6]),
-      note: toStr(row[7]),
-      inspection_date: toDateString(row[8]),
-      front_result: toStr(row[9]),
-      back_result: toStr(row[10]),
-      recoat: toStr(row[11]),
-      shape_fix: toStr(row[12]),
-      inspection_note: toStr(row[13]),
-      final_verdict: toStr(row[14]) ?? "",
-      note2: toStr(row[15]),
-      work_order_no: toStr(row[16]),
+      spec: toStr(row[4]),
+      coating_round: toStr(row[5]) ?? "",
+      round_no: parseRoundNo(row[5]),
+      position: toStr(row[6]),
+      direction: toStr(row[7]),
+      note: toStr(row[8]),
+      inspection_date: toDateString(row[9]),
+      front_result: toStr(row[10]),
+      back_result: toStr(row[11]),
+      recoat: toStr(row[12]),
+      shape_fix: toStr(row[13]),
+      inspection_note: toStr(row[14]),
+      final_verdict: toStr(row[15]) ?? "",
+      note2: toStr(row[16]),
+      work_order_no: toStr(row[17]),
       source_sheet: "current",
     });
   }

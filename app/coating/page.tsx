@@ -30,6 +30,7 @@ type CoatingRecord = {
   coating_date: string;
   part_number: string;
   serial_no: string | null;
+  spec: string | null;
   coating_round: string;
   round_no: number | null;
   position: string | null;
@@ -37,6 +38,13 @@ type CoatingRecord = {
   inspection_date: string | null;
   final_verdict: string;
 };
+
+type HeatTreatment = "normal" | "high";
+
+// 규격에 "1400"이 들어 있으면 고온열처리, 그 외는 일반열처리.
+function heatTreatmentOf(spec: string | null): HeatTreatment {
+  return spec?.includes("1400") ? "high" : "normal";
+}
 
 const PIE_COLORS = ["#2563eb", "#93c5fd"];
 
@@ -82,7 +90,7 @@ async function fetchAllCoatingRecords(): Promise<CoatingRecord[]> {
     const { data, error } = await supabase
       .from("coating_records")
       .select(
-        "id, coating_lot, coating_date, part_number, serial_no, coating_round, round_no, position, direction, inspection_date, final_verdict",
+        "id, coating_lot, coating_date, part_number, serial_no, spec, coating_round, round_no, position, direction, inspection_date, final_verdict",
       )
       .order("coating_date", { ascending: true })
       .range(from, from + pageSize - 1);
@@ -107,6 +115,7 @@ export default function CoatingPage() {
   const [monthOverride, setMonthOverride] = useState<string | null>(null);
   const [selectedParts, setSelectedParts] = useState<Set<string>>(new Set());
   const [partsOpen, setPartsOpen] = useState(false);
+  const [heatFilter, setHeatFilter] = useState<"all" | HeatTreatment>("all");
   const isDark = useIsDark();
   const axisColor = isDark ? "#d4d4d4" : "#404040";
   const labelColor = isDark ? "#f5f5f5" : "#171717";
@@ -142,14 +151,21 @@ export default function CoatingPage() {
     return records.filter((r) => selectedParts.has(r.part_number));
   }, [records, selectedParts]);
 
+  // 열처리 필터는 월별 생산수량 차트만 빼고 나머지 전부에 적용된다(그 차트는
+  // 일반/고온을 항상 나란히 보여줘야 해서 partFiltered를 그대로 쓴다).
+  const heatFiltered = useMemo(() => {
+    if (heatFilter === "all") return partFiltered;
+    return partFiltered.filter((r) => heatTreatmentOf(r.spec) === heatFilter);
+  }, [partFiltered, heatFilter]);
+
   const filtered = useMemo(() => {
-    return partFiltered.filter((r) => {
+    return heatFiltered.filter((r) => {
       if (year !== "all" && r.coating_date.slice(0, 4) !== year) return false;
       if (month !== "all" && r.coating_date.slice(5, 7) !== month)
         return false;
       return true;
     });
-  }, [partFiltered, year, month]);
+  }, [heatFiltered, year, month]);
 
   const kpi = useMemo(() => {
     const total = filtered.length;
@@ -161,7 +177,7 @@ export default function CoatingPage() {
 
   const queues = useMemo(() => {
     const countAt = (round: number, pred: (v: string) => boolean) =>
-      partFiltered.filter((r) => r.round_no === round && pred(r.final_verdict))
+      heatFiltered.filter((r) => r.round_no === round && pred(r.final_verdict))
         .length;
 
     const inspectionRounds = [1, 2, 3, 4, 5];
@@ -184,7 +200,7 @@ export default function CoatingPage() {
     }
 
     return { inspectionRounds, coatingRounds, inspectionWaiting, coatingWaiting };
-  }, [partFiltered]);
+  }, [heatFiltered]);
 
   const monthlyTrend = useMemo(() => {
     const byMonth = new Map<string, CoatingRecord[]>();
@@ -198,13 +214,19 @@ export default function CoatingPage() {
       .map(([key, recs]) => {
         const total = recs.length;
         const scrap = recs.filter((r) => isScrap(r.final_verdict)).length;
-        const rate = passRate(recs);
+        const normalRecs = recs.filter((r) => heatTreatmentOf(r.spec) === "normal");
+        const highRecs = recs.filter((r) => heatTreatmentOf(r.spec) === "high");
+        const normalRate = passRate(normalRecs);
+        const highRate = passRate(highRecs);
         return {
           // "26-03" 처럼 연도를 붙인다. 월만 쓰면 여러 해가 이어질 때
           // 어느 해의 3월인지 구분이 안 된다.
           month: key.slice(2),
-          total,
-          passRatePct: rate === null ? null : Math.round(rate * 100),
+          생산수량_일반: normalRecs.length,
+          생산수량_고온열처리: highRecs.length,
+          생산수량_합계: normalRecs.length + highRecs.length,
+          합격률_일반: normalRate === null ? null : Math.round(normalRate * 100),
+          합격률_고온열처리: highRate === null ? null : Math.round(highRate * 100),
           scrapRatePct: total === 0 ? 0 : Math.round((scrap / total) * 100),
         };
       });
@@ -214,7 +236,10 @@ export default function CoatingPage() {
   // 합격률 선과 붙어버린다. 최대값 위로 30% 여유를 두되 100 단위로 올림하고,
   // 생산량이 적은 달만 골라 봐도 그래프가 뭉개지지 않게 400 을 하한으로 둔다.
   const qtyAxisMax = useMemo(() => {
-    const max = monthlyTrend.reduce((m, d) => Math.max(m, d.total), 0);
+    const max = monthlyTrend.reduce(
+      (m, d) => Math.max(m, d.생산수량_일반 + d.생산수량_고온열처리),
+      0,
+    );
     return Math.max(400, Math.ceil((max * 1.3) / 100) * 100);
   }, [monthlyTrend]);
 
@@ -374,6 +399,22 @@ export default function CoatingPage() {
             </>
           )}
         </div>
+        <div>
+          <label className="mb-1 block text-xs text-foreground/60">
+            열처리
+          </label>
+          <select
+            value={heatFilter}
+            onChange={(e) =>
+              setHeatFilter(e.target.value as "all" | HeatTreatment)
+            }
+            className="rounded-md border border-black/10 bg-white px-2 py-1.5 text-sm text-black dark:border-white/10 dark:bg-neutral-800 dark:text-white"
+          >
+            <option value="all">전체</option>
+            <option value="normal">일반열처리</option>
+            <option value="high">고온열처리</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -416,7 +457,10 @@ export default function CoatingPage() {
 
       <div className="rounded-lg border border-black/10 p-4 dark:border-white/10">
         <p className="mb-4 text-sm font-semibold">
-          월별 생산수량, 합격률 및 폐기율
+          월별 생산수량, 합격률 및 폐기율 (일반 vs 고온열처리)
+        </p>
+        <p className="mb-3 -mt-3 text-xs text-foreground/50">
+          열처리 필터와 무관하게 항상 일반/고온열처리를 함께 보여준다
         </p>
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart data={monthlyTrend}>
@@ -435,25 +479,72 @@ export default function CoatingPage() {
               tick={{ fill: axisColor, fontSize: 14 }}
             />
             <Tooltip {...TOOLTIP_PROPS} />
-            <Legend wrapperStyle={{ color: axisColor, fontSize: 14 }} />
+            <Legend wrapperStyle={{ color: axisColor, fontSize: 14 }} itemSorter={null} />
             <Bar
               yAxisId="left"
-              dataKey="total"
-              name="생산수량"
-              fill="#60a5fa"
+              dataKey="생산수량_일반"
+              name="생산수량_일반"
+              stackId="qty"
+              fill="#93c5fd"
             >
-              <LabelList dataKey="total" position="top" fill={labelColor} fontSize={13} formatter={labelNumber} />
+              <LabelList dataKey="생산수량_일반" position="inside" fill="#171717" fontSize={12} formatter={labelNumber} />
             </Bar>
+            <Bar
+              yAxisId="left"
+              dataKey="생산수량_고온열처리"
+              name="생산수량_고온열처리"
+              stackId="qty"
+              fill="#f4a8a8"
+            >
+              <LabelList dataKey="생산수량_고온열처리" position="inside" fill="#171717" fontSize={12} formatter={labelNumber} />
+            </Bar>
+            {/* 쌓인 막대 맨 위에 합계를 보여주기 위한 투명 선. 막대로는 값이
+                0인 지점에서 라벨 자체가 안 그려져서, 대신 "합계" 값 그대로를
+                찍는 선(보이지는 않게)에 라벨만 얹는다. */}
             <Line
-              yAxisId="right"
-              dataKey="passRatePct"
-              name="합격률(%)"
-              stroke="#1e3a8a"
-              strokeWidth={2}
+              yAxisId="left"
+              dataKey="생산수량_합계"
+              name="생산수량_합계"
+              stroke="none"
               dot={false}
+              legendType="none"
+              isAnimationActive={false}
             >
               <LabelList
-                dataKey="passRatePct"
+                dataKey="생산수량_합계"
+                position="top"
+                fill={labelColor}
+                fontSize={13}
+                fontWeight={700}
+                formatter={labelNumber}
+              />
+            </Line>
+            <Line
+              yAxisId="right"
+              dataKey="합격률_일반"
+              name="합격률_일반"
+              stroke="#1e3a8a"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            >
+              <LabelList
+                dataKey="합격률_일반"
+                position="top"
+                fill={labelColor}
+                fontSize={13}
+                formatter={labelPercent}
+              />
+            </Line>
+            <Line
+              yAxisId="right"
+              dataKey="합격률_고온열처리"
+              name="합격률_고온열처리"
+              stroke="#f97316"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            >
+              <LabelList
+                dataKey="합격률_고온열처리"
                 position="top"
                 fill={labelColor}
                 fontSize={13}
@@ -464,12 +555,13 @@ export default function CoatingPage() {
               yAxisId="right"
               dataKey="scrapRatePct"
               name="폐기율(%)"
-              stroke="#f97316"
+              stroke="#6b7280"
+              strokeDasharray="4 3"
               strokeWidth={2}
               dot={false}
             >
               {/* 아래로 붙이면 0 근처에서 x축 글자와 겹친다. 위로 올려도
-                  합격률선은 90% 부근이라 서로 부딪히지 않는다. */}
+                  합격률선들은 90% 부근이라 서로 부딪히지 않는다. */}
               <LabelList
                 dataKey="scrapRatePct"
                 position="top"

@@ -18,6 +18,7 @@ create table if not exists public.coating_records (
   coating_date    date        not null,   -- 코팅일자
   part_number     text        not null,   -- 품번
   serial_no       text,                   -- 관리번호
+  spec            text,                   -- 규격 (2026-08-21부터 추가된 열; "1400" 포함 시 고온열처리)
   coating_round   text        not null,   -- 코팅차수
   round_no        integer,                -- 차수 숫자만 (1, 2, 3...)
   position        text,                   -- 위치 (UP / DOWN)
@@ -35,6 +36,10 @@ create table if not exists public.coating_records (
   source_sheet    text,                   -- 원본 시트 구분
   created_at      timestamptz not null default now()
 );
+
+-- 2026-08-21에 원본 엑셀에 "규격" 열이 새로 생겨서 추가한다. 이미 운영 중인
+-- DB에도 안전하게 실행 가능(이미 있으면 아무 일도 안 함).
+alter table public.coating_records add column if not exists spec text;
 
 create index if not exists coating_records_coating_date_idx
   on public.coating_records (coating_date);
