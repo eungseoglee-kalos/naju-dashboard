@@ -89,7 +89,7 @@ export const CONNECTOR_DEFECT_SHEET = "불량ERP";
 
 // ERPDATA 는 나주공장 전체 공정 실적이 한 시트에 섞여 있는 원본이라, 커넥터
 // 관련 5개 공정만 골라 담는다. 다른 공정이 실려 있어도 조용히 걸러진다.
-const CONNECTOR_PROCESSES = new Set([
+export const CONNECTOR_PROCESSES = new Set([
   "커넥터 세척",
   "커넥터 검사1",
   "커넥터 검사2",

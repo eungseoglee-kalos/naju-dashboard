@@ -22,24 +22,28 @@ import {
   parseConnectorDefects,
   CONNECTOR_ERP_SHEET,
   CONNECTOR_DEFECT_SHEET,
+  CONNECTOR_PROCESSES,
 } from "./connector-import";
 import {
   parseElectronBeamRecords,
   parseElectronBeamDefects,
   ELECTRON_BEAM_ERP_SHEET,
   ELECTRON_BEAM_DEFECT_SHEET,
+  ELECTRON_BEAM_PROCESSES,
 } from "./electron-beam-import";
 import {
   parseMeshQualityRecords,
   parseMeshQualityDefects,
   MESH_QUALITY_ERP_SHEET,
   MESH_QUALITY_DEFECT_SHEET,
+  MESH_QUALITY_PROCESSES,
 } from "./mesh-quality-import";
 import {
   parseVmQualityRecords,
   parseVmQualityDefects,
   VM_QUALITY_ERP_SHEET,
   VM_QUALITY_DEFECT_SHEET,
+  VM_QUALITY_PROCESSES,
 } from "./vm-quality-import";
 
 /**
@@ -55,11 +59,21 @@ export type IngestTarget = {
   /**
    * 여러 품질실적 대시보드가 전부 Power BI에서 나온 같은 시트 이름
    * ("ERPDATA", "불량ERP")을 쓰기 때문에 시트만으로는 어느 파일인지 구분이
-   * 안 된다. 이 값이 있으면 파일명에 이 문자열이 들어 있어야만 이 대상으로
-   * 판별한다 (예: "커넥터", "전자빔"). 시트 이름이 이미 고유한 대상은 안
-   * 써도 된다.
+   * 안 된다. 같은 시트를 쓰는 대상이 여럿이면 `processes`/`processColumn`로
+   * 시트 안 공정 이름을 보고 가려내는 게 우선이고, 그걸로도 못 가리면(시트가
+   * 비어 있거나 예상 밖 데이터일 때) 이 값 -- 파일명에 이 문자열이 들어 있는지
+   * -- 로 한 번 더 시도한다. 시트 이름이 이미 고유한 대상은 둘 다 안 써도 된다.
    */
   fileNameIncludes?: string;
+  /**
+   * 같은 시트를 쓰는 대상을 가려내는 기준. 이 목록에 있는 공정 이름이 시트의
+   * `processColumn` 열에 하나라도 있으면 이 대상으로 판별한다. 관리자가
+   * 파일을 원래 이름과 다르게 저장해 올려도(자동 업로드 스크립트가 쓰는
+   * 고정된 파일명 패턴을 안 따를 때) 문제없이 판별되도록 파일명보다 우선한다.
+   */
+  processes?: Set<string>;
+  /** processes 로 가려낼 때 볼 열 (0부터 시작). ERPDATA=2, 불량ERP=4. */
+  processColumn?: number;
   table: string;
   label: string;
   /** 취합 후 캐시를 무효화할 경로. */
@@ -121,6 +135,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: CONNECTOR_ERP_SHEET,
     fileNameIncludes: "커넥터",
+    processes: CONNECTOR_PROCESSES,
+    processColumn: 2,
     table: "connector_quality_records",
     label: "커넥터 품질실적",
     path: "/connector-quality",
@@ -129,6 +145,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: CONNECTOR_DEFECT_SHEET,
     fileNameIncludes: "커넥터",
+    processes: CONNECTOR_PROCESSES,
+    processColumn: 4,
     table: "connector_defect_details",
     label: "커넥터 불량유형",
     path: "/connector-quality",
@@ -137,6 +155,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: ELECTRON_BEAM_ERP_SHEET,
     fileNameIncludes: "전자빔",
+    processes: ELECTRON_BEAM_PROCESSES,
+    processColumn: 2,
     table: "electron_beam_quality_records",
     label: "전자빔 품질실적",
     path: "/electron-beam-quality",
@@ -145,6 +165,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: ELECTRON_BEAM_DEFECT_SHEET,
     fileNameIncludes: "전자빔",
+    processes: ELECTRON_BEAM_PROCESSES,
+    processColumn: 4,
     table: "electron_beam_defect_details",
     label: "전자빔 불량유형",
     path: "/electron-beam-quality",
@@ -153,6 +175,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: MESH_QUALITY_ERP_SHEET,
     fileNameIncludes: "메시 품질실적",
+    processes: MESH_QUALITY_PROCESSES,
+    processColumn: 2,
     table: "mesh_quality_records",
     label: "메시 품질실적",
     path: "/mesh-quality",
@@ -161,6 +185,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: MESH_QUALITY_DEFECT_SHEET,
     fileNameIncludes: "메시 품질실적",
+    processes: MESH_QUALITY_PROCESSES,
+    processColumn: 4,
     table: "mesh_quality_defect_details",
     label: "메시 불량유형",
     path: "/mesh-quality",
@@ -169,6 +195,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: VM_QUALITY_ERP_SHEET,
     fileNameIncludes: "VM 품질실적",
+    processes: VM_QUALITY_PROCESSES,
+    processColumn: 2,
     table: "vm_quality_records",
     label: "VM코일 품질실적",
     path: "/vm-quality",
@@ -177,6 +205,8 @@ export const INGEST_TARGETS: IngestTarget[] = [
   {
     sheet: VM_QUALITY_DEFECT_SHEET,
     fileNameIncludes: "VM 품질실적",
+    processes: VM_QUALITY_PROCESSES,
+    processColumn: 4,
     table: "vm_quality_defect_details",
     label: "VM코일 불량유형",
     path: "/vm-quality",
@@ -184,23 +214,74 @@ export const INGEST_TARGETS: IngestTarget[] = [
   },
 ];
 
+/** 시트의 특정 열에 실제로 어떤 값이 들어 있는지 모은다(공정 이름 판별용). */
+function columnValues(
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  column: number,
+): Set<string> {
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) return new Set();
+  const rows = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    range: 2,
+    defval: null,
+  }) as unknown[][];
+  const found = new Set<string>();
+  for (const row of rows) {
+    const v = row[column];
+    if (typeof v === "string" && v.trim()) found.add(v.trim());
+  }
+  return found;
+}
+
 /** 워크북에 들어 있는 시트(와 필요하면 파일명)를 보고 어떤 대상을 취합할지 고른다. */
 export function detectTargets(
   buffer: ArrayBuffer,
   fileName?: string | null,
 ): IngestTarget[] {
-  const { SheetNames } = XLSX.read(buffer, {
-    type: "array",
-    bookSheets: true,
-  });
-  const present = new Set(SheetNames);
-  return INGEST_TARGETS.filter((t) => {
-    if (!present.has(t.sheet)) return false;
-    if (t.fileNameIncludes && !(fileName ?? "").includes(t.fileNameIncludes)) {
-      return false;
+  const workbook = XLSX.read(buffer, { type: "array", dense: true });
+  const present = new Set(workbook.SheetNames);
+  const candidates = INGEST_TARGETS.filter((t) => present.has(t.sheet));
+
+  const bySheet = new Map<string, IngestTarget[]>();
+  for (const t of candidates) {
+    if (!bySheet.has(t.sheet)) bySheet.set(t.sheet, []);
+    bySheet.get(t.sheet)!.push(t);
+  }
+
+  const result: IngestTarget[] = [];
+  for (const targets of bySheet.values()) {
+    if (targets.length === 1) {
+      result.push(targets[0]);
+      continue;
     }
-    return true;
-  });
+
+    // 같은 시트 이름을 쓰는 대상이 여럿이면(품질실적 대시보드들), 시트 안에
+    // 실제로 있는 공정 이름으로 가려낸다. 파일명에만 의존하면 관리자 화면에서
+    // 자동 업로드 스크립트가 쓰는 파일명 패턴과 다르게 저장된 파일을 올렸을 때
+    // 못 찾는다.
+    const found = columnValues(workbook, targets[0].sheet, targets[0].processColumn ?? 2);
+    const matched = targets.filter(
+      (t) => t.processes && [...t.processes].some((p) => found.has(p)),
+    );
+    if (matched.length > 0) {
+      result.push(...matched);
+      continue;
+    }
+
+    // 공정 이름으로 못 가리면(시트가 비어 있거나 예상 밖 데이터라면) 예전
+    // 방식인 파일명으로 한 번 더 시도한다.
+    if (fileName) {
+      result.push(
+        ...targets.filter(
+          (t) => t.fileNameIncludes && fileName.includes(t.fileNameIncludes),
+        ),
+      );
+    }
+  }
+
+  return result;
 }
 
 export class IngestError extends Error {}

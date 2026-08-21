@@ -90,7 +90,7 @@ export const ELECTRON_BEAM_DEFECT_SHEET = "불량ERP";
 // ERPDATA 는 나주공장 전체 공정 실적이 한 시트에 섞여 있는 원본이라, 전자빔
 // 품질 대시보드가 실제로 추적하는 5개 공정만 남긴다 (전자빔열처리, 전자빔
 // 다리절단은 이 대시보드에서 추적하지 않는 공정이라 일부러 뺀다).
-const ELECTRON_BEAM_PROCESSES = new Set([
+export const ELECTRON_BEAM_PROCESSES = new Set([
   "전자빔검사",
   "전자빔세척",
   "전자빔절곡",

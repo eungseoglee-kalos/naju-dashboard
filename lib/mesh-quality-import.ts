@@ -91,7 +91,7 @@ export const MESH_QUALITY_DEFECT_SHEET = "불량ERP";
 // 품질 대시보드가 실제로 추적하는 2개 공정만 남긴다 (열처리 세척/세정,
 // 수입검사, 표면검사 등 나머지 메시 관련 공정은 이 대시보드가 추적하지
 // 않는다).
-const MESH_QUALITY_PROCESSES = new Set(["출하검사", "와이어컷팅"]);
+export const MESH_QUALITY_PROCESSES = new Set(["출하검사", "와이어컷팅"]);
 
 // 작업일 | 작업장 | 공정 | 품목 | 규격 | 품목명 | 단위 | 실적수량 | 불량수량 |
 // 양품수량 | 비고1 | 단중(g) | 비고2 | 작업시간(H) | 작업자 | 담당자 | 대분류 |

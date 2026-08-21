@@ -101,7 +101,7 @@ export const VM_QUALITY_DEFECT_SHEET = "불량ERP";
 
 // ERPDATA 는 나주공장 전체 공정 실적이 한 시트에 섞여 있는 원본이라, VM코일
 // 품질 대시보드가 실제로 추적하는 6개 공정만 남긴다.
-const VM_QUALITY_PROCESSES = new Set([
+export const VM_QUALITY_PROCESSES = new Set([
   "V/M 검사",
   "권선",
   "절단",
