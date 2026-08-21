@@ -399,7 +399,7 @@ export default function CoatingPage() {
             </>
           )}
         </div>
-        <div>
+        <div className="ml-16">
           <label className="mb-1 block text-xs text-foreground/60">
             열처리
           </label>
