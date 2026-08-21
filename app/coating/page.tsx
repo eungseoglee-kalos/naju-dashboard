@@ -459,11 +459,11 @@ export default function CoatingPage() {
         <p className="mb-4 text-sm font-semibold">
           월별 생산수량, 합격률 및 폐기율 (일반 vs 고온열처리)
         </p>
-        <p className="mb-3 -mt-3 text-xs text-foreground/50">
+        <p className="-mt-3 mb-6 text-xs text-foreground/50">
           열처리 필터와 무관하게 항상 일반/고온열처리를 함께 보여준다
         </p>
         <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={monthlyTrend}>
+          <ComposedChart data={monthlyTrend} margin={{ top: 30, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis dataKey="month" tick={{ fill: axisColor, fontSize: 14 }} />
             <YAxis
